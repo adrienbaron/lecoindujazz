@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => ({
   charset: "utf-8",
   title: "Le Coin du Jazz - Billetterie",
   viewport: "width=device-width,initial-scale=1",
-  "theme-color": "#1F242D",
+  "theme-color": "#202021",
 });
 
 export default function App() {
