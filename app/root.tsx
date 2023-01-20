@@ -14,7 +14,7 @@ export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
-  title: "Le Coin du Jazz - Billetterie",
+  title: "Le Coin du jazz - Billetterie",
   viewport: "width=device-width,initial-scale=1",
   "theme-color": "#202021",
 });
@@ -30,7 +30,9 @@ export default function App() {
         <header className="navbar bg-base-200">
           <img src="/images/logo.png" alt="" height="36" width="150" />
         </header>
-        <Outlet />
+        <main className="p-2 md:p-4 lg:px-6 max-w-6xl m-auto">
+          <Outlet />
+        </main>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
