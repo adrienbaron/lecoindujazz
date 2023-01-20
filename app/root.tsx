@@ -27,6 +27,9 @@ export default function App() {
         <Links />
       </head>
       <body>
+        <header className="navbar bg-base-200">
+          <img src="/images/logo.png" alt="" height="36" width="150" />
+        </header>
         <Outlet />
         <ScrollRestoration />
         <Scripts />
