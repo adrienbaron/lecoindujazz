@@ -7,14 +7,17 @@ export interface Seat {
   isBis?: boolean;
 }
 
-export interface EmptySpace {
-  isEmpty: true;
-  label?: string;
-}
+export type EmptySpace = { isEmpty: true } & (
+  | { type: "seat" }
+  | { type: "row-label" }
+  | { type: "corridor" }
+);
+
+export type GridElement = Seat | EmptySpace;
 
 export interface SeatRow {
   letter: RowLetter;
-  seats: (Seat | EmptySpace)[];
+  seats: GridElement[];
 }
 
 export interface SeatSection {
@@ -22,7 +25,7 @@ export interface SeatSection {
   rows: SeatRow[];
 }
 
-export const isEmptySpace = (seat: Seat | EmptySpace): seat is EmptySpace =>
+export const isEmptySpace = (seat: GridElement): seat is EmptySpace =>
   (seat as EmptySpace).isEmpty;
 
 export const generateSeatSection = (
@@ -33,9 +36,22 @@ export const generateSeatSection = (
   rows,
 });
 
-export const generateEmptySpace = (label?: string): EmptySpace => ({
+export const generateEmptySeats = (count = 1): EmptySpace[] => {
+  const emptySpaces: EmptySpace[] = [];
+  for (let i = 0; i < count; i++) {
+    emptySpaces.push({ isEmpty: true, type: "seat" });
+  }
+  return emptySpaces;
+};
+
+export const generateCorridor = (): EmptySpace => ({
   isEmpty: true,
-  label,
+  type: "corridor",
+});
+
+export const generateRowLabel = (): EmptySpace => ({
+  isEmpty: true,
+  type: "row-label",
 });
 
 export const generateSeatForRow =
@@ -45,7 +61,7 @@ export const generateSeatForRow =
 
 export const generateSeatRow = (
   rowLetter: RowLetter,
-  seats: (Seat | EmptySpace)[]
+  seats: GridElement[]
 ): SeatRow => ({
   letter: rowLetter,
   seats,
@@ -62,6 +78,14 @@ export const generateSeat = ({
   isBis,
 });
 
+export const addBisAtStart = (seats: Seat[]): Seat[] => {
+  return [generateSeat({ ...seats[0], isBis: true }), ...seats];
+};
+
+export const addBisAtEnd = (seats: Seat[]): Seat[] => {
+  return [...seats, generateSeat({ ...seats[seats.length - 1], isBis: true })];
+};
+
 export const alternateNums = (numSeats: number): number[] => {
   const seatList: number[] = [];
 
@@ -74,6 +98,26 @@ export const alternateNums = (numSeats: number): number[] => {
       currentSeatNum = 1;
       delta = 2;
     }
+  }
+
+  return seatList;
+};
+
+export const numsDecreasing = (numSeats: number, min: number): number[] => {
+  const seatList: number[] = [];
+
+  for (let i = numSeats; i >= min; i = i - 2) {
+    seatList.push(i);
+  }
+
+  return seatList;
+};
+
+export const numsIncreasing = (numSeats: number, max: number): number[] => {
+  const seatList: number[] = [];
+
+  for (let i = numSeats; i <= max; i = i + 2) {
+    seatList.push(i);
   }
 
   return seatList;
