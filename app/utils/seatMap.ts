@@ -155,8 +155,16 @@ export const numsIncreasing = (numSeats: number, max: number): number[] => {
 export const alternateSeats = (numSeats: number): SeatForRow[] =>
   alternateNums(numSeats).map((num) => ({ num }));
 
-export const seatsDecreasing = (numSeats: number, min: number): SeatForRow[] =>
-  numsDecreasing(numSeats, min).map((num) => ({ num }));
+export const seatsDecreasing = (
+  numSeats: number,
+  min: number,
+  seatAttributes: SeatAttributes = {}
+): SeatForRow[] =>
+  numsDecreasing(numSeats, min).map((num) => ({ num, ...seatAttributes }));
 
-export const seatsIncreasing = (numSeats: number, max: number): SeatForRow[] =>
-  numsIncreasing(numSeats, max).map((num) => ({ num }));
+export const seatsIncreasing = (
+  numSeats: number,
+  max: number,
+  seatAttributes: SeatAttributes = {}
+): SeatForRow[] =>
+  numsIncreasing(numSeats, max).map((num) => ({ num, ...seatAttributes }));
