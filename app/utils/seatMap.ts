@@ -1,11 +1,17 @@
 export type RowLetter = string;
 
-export interface Seat {
+type SeatAttributes = {
+  isBis?: boolean;
+  isSecurity?: boolean;
+  hasRestrictedView?: boolean;
+  isWheelchairAccessible?: boolean;
+};
+
+export type Seat = {
   id: string;
   num: number;
   rowLetter: RowLetter;
-  isBis?: boolean;
-}
+} & SeatAttributes;
 
 export type EmptySpace = { isEmpty: true } & (
   | { type: "spacing" }
@@ -88,17 +94,25 @@ export const generateSeatRow = (
   seats,
 });
 
-export const generateSeat = ({ num, isBis }: SeatForRow): SeatForRow => ({
-  num,
-  isBis,
-});
-
-export const addBisAtStart = (seats: SeatForRow[]): SeatForRow[] => {
-  return [generateSeat({ ...seats[0], isBis: true }), ...seats];
+export const addBisAtStart = (
+  seats: SeatForRow[],
+  seatAttributes: SeatAttributes = {}
+): SeatForRow[] => {
+  return [{ num: seats[0].num, ...seatAttributes, isBis: true }, ...seats];
 };
 
-export const addBisAtEnd = (seats: SeatForRow[]): SeatForRow[] => {
-  return [...seats, generateSeat({ ...seats[seats.length - 1], isBis: true })];
+export const addBisAtEnd = (
+  seats: SeatForRow[],
+  seatAttributes: SeatAttributes = {}
+): SeatForRow[] => {
+  return [
+    ...seats,
+    {
+      num: seats[seats.length - 1].num,
+      ...seatAttributes,
+      isBis: true,
+    },
+  ];
 };
 
 export const alternateNums = (numSeats: number): number[] => {
@@ -139,10 +153,10 @@ export const numsIncreasing = (numSeats: number, max: number): number[] => {
 };
 
 export const alternateSeats = (numSeats: number): SeatForRow[] =>
-  alternateNums(numSeats).map((num) => generateSeat({ num }));
+  alternateNums(numSeats).map((num) => ({ num }));
 
 export const seatsDecreasing = (numSeats: number, min: number): SeatForRow[] =>
-  numsDecreasing(numSeats, min).map((num) => generateSeat({ num }));
+  numsDecreasing(numSeats, min).map((num) => ({ num }));
 
 export const seatsIncreasing = (numSeats: number, max: number): SeatForRow[] =>
-  numsIncreasing(numSeats, max).map((num) => generateSeat({ num }));
+  numsIncreasing(numSeats, max).map((num) => ({ num }));
