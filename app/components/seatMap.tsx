@@ -1,3 +1,4 @@
+import { Form } from "@remix-run/react";
 import classNames from "classnames";
 import React from "react";
 
@@ -17,7 +18,11 @@ const sectionTypeToTitle: Record<SeatSectionType, string> = {
   THIRD_GALLERY: "Troisième galerie",
 };
 
-export const SeatMap: React.FC = () => {
+interface SeatMapProps {
+  seatIds: string[];
+}
+
+export const SeatMap: React.FC<SeatMapProps> = ({ seatIds }) => {
   const sections = [
     thirdGallerySection,
     secondGallerySection,
@@ -25,9 +30,11 @@ export const SeatMap: React.FC = () => {
     orchestraSection,
   ];
 
+  const seatIdsSet = new Set(seatIds);
+
   return (
     <div className="flex w-full overflow-scroll">
-      <div className="flex flex-col items-center gap-6">
+      <Form className="flex flex-col items-center gap-6" method="post">
         {sections.map((section) => (
           <div
             key={section.type}
@@ -55,23 +62,35 @@ export const SeatMap: React.FC = () => {
                         </div>
                       );
                     } else {
+                      const isBooked = seatIdsSet.has(seat.id);
+
                       return (
-                        <div
-                          key={index}
-                          className={classNames(
-                            "flex h-8 w-8 shrink-0 flex-col items-center justify-center text-sm",
-                            seat.isSecurity && "bg-red-500",
-                            !seat.isSecurity && "bg-green-700",
-                            seat.hasRestrictedView &&
-                              "border-2 border-orange-300",
-                            seat.isWheelchairAccessible &&
-                              "border-2 border-blue-900"
-                          )}
-                        >
-                          <span className="leading-3">{seat.num}</span>
-                          <span className="text-xs leading-3">
-                            {seat.isBis && "bis"}
-                          </span>
+                        <div key={index}>
+                          <input
+                            type="checkbox"
+                            name="seat"
+                            id={seat.id}
+                            value={seat.id}
+                            className="peer absolute h-0 w-0 opacity-0"
+                          />
+                          <label
+                            htmlFor={seat.id}
+                            className={classNames(
+                              "flex h-8 w-8 shrink-0 flex-col items-center justify-center text-sm",
+                              "peer-checked:border-4 border-green-400 peer-focus:ring-2",
+                              (seat.isSecurity || isBooked) && "bg-red-500",
+                              !seat.isSecurity && "bg-green-700",
+                              seat.hasRestrictedView &&
+                                "border-2 border-orange-300",
+                              seat.isWheelchairAccessible &&
+                                "border-2 border-blue-900"
+                            )}
+                          >
+                            <span className="leading-3">{seat.num}</span>
+                            <span className="text-xs leading-3">
+                              {seat.isBis && "bis"}
+                            </span>
+                          </label>
                         </div>
                       );
                     }
@@ -81,7 +100,11 @@ export const SeatMap: React.FC = () => {
             </div>
           </div>
         ))}
-      </div>
+
+        <button type="submit" className="btn-primary btn">
+          Réserver
+        </button>
+      </Form>
     </div>
   );
 };
