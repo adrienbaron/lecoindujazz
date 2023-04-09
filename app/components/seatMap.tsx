@@ -4,15 +4,20 @@ import React from "react";
 import {
   firstGallerySection,
   orchestraSection,
+  secondGallerySection,
 } from "~/models/calaisTheatreSeatingPlan";
 import { isEmptySpace } from "~/utils/seatMap";
 
 export const SeatMap: React.FC = () => {
-  const sections = [firstGallerySection, orchestraSection];
+  const sections = [
+    secondGallerySection,
+    firstGallerySection,
+    orchestraSection,
+  ];
 
   return (
     <div className="flex overflow-scroll">
-      <div className="flex flex-col items-center">
+      <div className="flex w-full flex-col items-center">
         <h1>Seat Map</h1>
         {sections.map((section) => (
           <div key={section.name} className="m-auto">
