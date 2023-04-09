@@ -8,7 +8,7 @@ export interface Seat {
 }
 
 export type EmptySpace = { isEmpty: true } & (
-  | { type: "seat" }
+  | { type: "spacing" }
   | { type: "row-label" }
   | { type: "corridor" }
 );
@@ -54,10 +54,13 @@ export const generateSeatSection = (
   })),
 });
 
-export const generateEmptySpace = (count = 1): EmptySpace[] => {
+export const generateEmptySpace = (
+  count = 1,
+  { type = "spacing" }: { type?: EmptySpace["type"] } = {}
+): EmptySpace[] => {
   const emptySpaces: EmptySpace[] = [];
   for (let i = 0; i < count; i++) {
-    emptySpaces.push({ isEmpty: true, type: "seat" });
+    emptySpaces.push({ isEmpty: true, type });
   }
   return emptySpaces;
 };

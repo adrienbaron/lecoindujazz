@@ -33,7 +33,7 @@ export const SeatMap: React.FC = () => {
                         <div
                           key={index}
                           className={classNames(
-                            seat.type !== "corridor" && "bg-gray-800",
+                            seat.type === "row-label" && "bg-gray-800",
                             "flex h-8 w-8 flex-col items-center justify-center text-sm shrink-0"
                           )}
                         >
