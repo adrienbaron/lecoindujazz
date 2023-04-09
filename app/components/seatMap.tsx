@@ -5,11 +5,13 @@ import {
   firstGallerySection,
   orchestraSection,
   secondGallerySection,
+  thirdGallerySection,
 } from "~/models/calaisTheatreSeatingPlan";
 import { isEmptySpace } from "~/utils/seatMap";
 
 export const SeatMap: React.FC = () => {
   const sections = [
+    thirdGallerySection,
     secondGallerySection,
     firstGallerySection,
     orchestraSection,
