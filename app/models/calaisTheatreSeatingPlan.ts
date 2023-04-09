@@ -392,7 +392,7 @@ export const orchestraSection = generateSeatSection("ORCHESTRA", [
   ]),
   generateSeatRow("O", [
     ...generateEmptySpace(3),
-    ...generateEmptySpace(2),
+    ...seatsDecreasing(20, 18, { isWheelchairAccessible: true }),
     ...generateEmptySpace(3),
     generateCorridor(),
     generateRowLabel(),
@@ -402,7 +402,7 @@ export const orchestraSection = generateSeatSection("ORCHESTRA", [
     generateRowLabel(),
     generateCorridor(),
     ...generateEmptySpace(3),
-    ...generateEmptySpace(2),
+    ...seatsIncreasing(17, 19, { isWheelchairAccessible: true }),
     ...generateEmptySpace(3),
   ]),
   generateOrchestraRowWithBis({

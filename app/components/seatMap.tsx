@@ -49,7 +49,8 @@ export const SeatMap: React.FC = () => {
                           className={classNames(
                             "flex h-8 w-8 shrink-0 flex-col items-center justify-center text-sm",
                             seat.isSecurity && "bg-red-500",
-                            seat.hasRestrictedView && "bg-orange-300"
+                            seat.hasRestrictedView && "bg-orange-300",
+                            seat.isWheelchairAccessible && "bg-blue-900"
                           )}
                         >
                           <span>{seat.num}</span>
