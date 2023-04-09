@@ -7,7 +7,15 @@ import {
   secondGallerySection,
   thirdGallerySection,
 } from "~/models/calaisTheatreSeatingPlan";
+import type { SeatSectionType } from "~/utils/seatMap";
 import { isEmptySpace } from "~/utils/seatMap";
+
+const sectionTypeToTitle: Record<SeatSectionType, string> = {
+  ORCHESTRA: "Orchestre",
+  FIRST_GALLERY: "Première galerie",
+  SECOND_GALLERY: "Deuxième galerie",
+  THIRD_GALLERY: "Troisième galerie",
+};
 
 export const SeatMap: React.FC = () => {
   const sections = [
@@ -18,12 +26,16 @@ export const SeatMap: React.FC = () => {
   ];
 
   return (
-    <div className="flex overflow-scroll">
-      <div className="flex w-full flex-col items-center">
-        <h1>Seat Map</h1>
+    <div className="flex w-full overflow-scroll">
+      <div className="flex flex-col items-center gap-6">
         {sections.map((section) => (
-          <div key={section.name} className="m-auto">
-            <h2>{section.name}</h2>
+          <div
+            key={section.type}
+            className="m-auto flex flex-col items-center gap-2"
+          >
+            <h2 className="text-lg font-medium">
+              {sectionTypeToTitle[section.type]}
+            </h2>
             <div className="space-y-2">
               {section.rows.map((row) => (
                 <div key={row.letter} className="flex gap-2">
@@ -49,12 +61,17 @@ export const SeatMap: React.FC = () => {
                           className={classNames(
                             "flex h-8 w-8 shrink-0 flex-col items-center justify-center text-sm",
                             seat.isSecurity && "bg-red-500",
-                            seat.hasRestrictedView && "bg-orange-300",
-                            seat.isWheelchairAccessible && "bg-blue-900"
+                            !seat.isSecurity && "bg-green-700",
+                            seat.hasRestrictedView &&
+                              "border-2 border-orange-300",
+                            seat.isWheelchairAccessible &&
+                              "border-2 border-blue-900"
                           )}
                         >
-                          <span>{seat.num}</span>
-                          <span>{seat.isBis && "bis"}</span>
+                          <span className="leading-3">{seat.num}</span>
+                          <span className="text-xs leading-3">
+                            {seat.isBis && "bis"}
+                          </span>
                         </div>
                       );
                     }

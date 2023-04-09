@@ -26,14 +26,14 @@ export interface SeatRow {
   seats: GridElement[];
 }
 
-type SeatSectionName =
+export type SeatSectionType =
   | "ORCHESTRA"
   | "FIRST_GALLERY"
   | "SECOND_GALLERY"
   | "THIRD_GALLERY";
 
 export interface SeatSection {
-  name: SeatSectionName;
+  type: SeatSectionType;
   rows: SeatRow[];
 }
 
@@ -41,10 +41,10 @@ export const isEmptySpace = (seat: unknown): seat is EmptySpace =>
   (seat as EmptySpace).isEmpty;
 
 export const generateSeatSection = (
-  name: SeatSectionName,
+  type: SeatSectionType,
   rows: SeatRowForSection[]
 ): SeatSection => ({
-  name,
+  type,
   rows: rows.map((row) => ({
     ...row,
     seats: row.seats.map((seat) => {
@@ -53,7 +53,7 @@ export const generateSeatSection = (
       }
       return {
         ...seat,
-        id: `${name}|${row.letter}|${seat.num}`,
+        id: `${type}|${row.letter}|${seat.num}`,
         rowLetter: row.letter,
       };
     }),
