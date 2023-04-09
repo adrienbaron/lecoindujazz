@@ -30,7 +30,7 @@ export default function App() {
         <header className="navbar bg-base-200">
           <img src="/images/logo.png" alt="" height="36" width="150" />
         </header>
-        <main className="p-2 md:p-4 lg:px-6 max-w-6xl m-auto">
+        <main className="m-auto p-2 md:p-4 lg:px-6">
           <Outlet />
         </main>
         <ScrollRestoration />

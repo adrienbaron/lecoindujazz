@@ -20,8 +20,14 @@ export interface SeatRow {
   seats: GridElement[];
 }
 
+type SeatSectionName =
+  | "ORCHESTRA"
+  | "FIRST_GALLERY"
+  | "SECOND_GALLERY"
+  | "THIRD_GALLERY";
+
 export interface SeatSection {
-  name: string;
+  name: SeatSectionName;
   rows: SeatRow[];
 }
 
@@ -29,7 +35,7 @@ export const isEmptySpace = (seat: GridElement): seat is EmptySpace =>
   (seat as EmptySpace).isEmpty;
 
 export const generateSeatSection = (
-  name: string,
+  name: SeatSectionName,
   rows: SeatRow[]
 ): SeatSection => ({
   name,
