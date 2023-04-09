@@ -31,15 +31,27 @@ export interface SeatSection {
   rows: SeatRow[];
 }
 
-export const isEmptySpace = (seat: GridElement): seat is EmptySpace =>
+export const isEmptySpace = (seat: unknown): seat is EmptySpace =>
   (seat as EmptySpace).isEmpty;
 
 export const generateSeatSection = (
   name: SeatSectionName,
-  rows: SeatRow[]
+  rows: SeatRowForSection[]
 ): SeatSection => ({
   name,
-  rows,
+  rows: rows.map((row) => ({
+    ...row,
+    seats: row.seats.map((seat) => {
+      if (isEmptySpace(seat)) {
+        return seat;
+      }
+      return {
+        ...seat,
+        id: `${name}|${row.letter}|${seat.num}`,
+        rowLetter: row.letter,
+      };
+    }),
+  })),
 });
 
 export const generateEmptySpace = (count = 1): EmptySpace[] => {
@@ -60,35 +72,29 @@ export const generateRowLabel = (): EmptySpace => ({
   type: "row-label",
 });
 
-export const generateSeatForRow =
-  (rowLetter: RowLetter): ((num: number) => Seat) =>
-  (num: number) =>
-    generateSeat({ num, rowLetter });
+export type SeatForRow = Omit<Seat, "id" | "rowLetter">;
+type SeatRowForSection = Omit<SeatRow, "seats"> & {
+  seats: (SeatForRow | EmptySpace)[];
+};
 
 export const generateSeatRow = (
   rowLetter: RowLetter,
-  seats: GridElement[]
-): SeatRow => ({
+  seats: (SeatForRow | EmptySpace)[]
+): SeatRowForSection => ({
   letter: rowLetter,
   seats,
 });
 
-export const generateSeat = ({
+export const generateSeat = ({ num, isBis }: SeatForRow): SeatForRow => ({
   num,
-  rowLetter,
-  isBis,
-}: Omit<Seat, "id">): Seat => ({
-  id: `${rowLetter}${num}`,
-  num,
-  rowLetter,
   isBis,
 });
 
-export const addBisAtStart = (seats: Seat[]): Seat[] => {
+export const addBisAtStart = (seats: SeatForRow[]): SeatForRow[] => {
   return [generateSeat({ ...seats[0], isBis: true }), ...seats];
 };
 
-export const addBisAtEnd = (seats: Seat[]): Seat[] => {
+export const addBisAtEnd = (seats: SeatForRow[]): SeatForRow[] => {
   return [...seats, generateSeat({ ...seats[seats.length - 1], isBis: true })];
 };
 
@@ -128,3 +134,12 @@ export const numsIncreasing = (numSeats: number, max: number): number[] => {
 
   return seatList;
 };
+
+export const alternateSeats = (numSeats: number): SeatForRow[] =>
+  alternateNums(numSeats).map((num) => generateSeat({ num }));
+
+export const seatsDecreasing = (numSeats: number, min: number): SeatForRow[] =>
+  numsDecreasing(numSeats, min).map((num) => generateSeat({ num }));
+
+export const seatsIncreasing = (numSeats: number, max: number): SeatForRow[] =>
+  numsIncreasing(numSeats, max).map((num) => generateSeat({ num }));
