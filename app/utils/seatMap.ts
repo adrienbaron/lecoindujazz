@@ -42,7 +42,7 @@ export const generateSeatSection = (
   rows,
 });
 
-export const generateEmptySeats = (count = 1): EmptySpace[] => {
+export const generateEmptySpace = (count = 1): EmptySpace[] => {
   const emptySpaces: EmptySpace[] = [];
   for (let i = 0; i < count; i++) {
     emptySpaces.push({ isEmpty: true, type: "seat" });
