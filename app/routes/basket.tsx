@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/router";
-import { eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { useMemo } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
@@ -24,7 +24,12 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
   const allSeatLocksInBasketForSession = await db
     .select()
     .from(seatsLockTable)
-    .where(eq(seatsLockTable.sessionId, sessionId))
+    .where(
+      and(
+        eq(seatsLockTable.sessionId, sessionId),
+        gt(seatsLockTable.lockedUntil, new Date())
+      )
+    )
     .all();
 
   return typedjson(allSeatLocksInBasketForSession, {
