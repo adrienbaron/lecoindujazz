@@ -1,7 +1,7 @@
 import { json } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
-import { and, eq, gt, inArray, or } from "drizzle-orm";
+import { and, eq, gt, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
@@ -80,11 +80,11 @@ export const action = async ({
     throw json({ error: "Some seats are already locked" }, { status: 400 });
   }
 
-  await db
-    .delete(seatsLockTable)
-    .where(
-      or(
-        ...seatLocks.map((seatLock) =>
+  await Promise.all(
+    seatLocks.map((seatLock) =>
+      db
+        .delete(seatsLockTable)
+        .where(
           and(
             eq(seatsLockTable.showId, showId),
             eq(seatsLockTable.seatId, seatLock.seatId),
@@ -92,9 +92,9 @@ export const action = async ({
             eq(seatsLockTable.lockedUntil, seatLock.lockedUntil)
           )
         )
-      )
+        .run()
     )
-    .run();
+  );
 
   const lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
   await db
