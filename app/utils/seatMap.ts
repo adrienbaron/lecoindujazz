@@ -53,7 +53,7 @@ export const generateSeatSection = (
       }
       return {
         ...seat,
-        id: `${type}|${row.letter}|${seat.num}`,
+        id: `${type}|${row.letter}|${seat.num}${seat.isBis ? "|bis" : ""}`,
         rowLetter: row.letter,
       };
     }),
