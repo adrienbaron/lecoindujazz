@@ -1,7 +1,7 @@
 import { json } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { v4 as uuidv4 } from "uuid";
 
@@ -55,6 +55,41 @@ export const action = async ({
   const seatIds = formData.getAll("seat");
 
   const db = drizzle(context.DB as D1Database);
+  const seatLocks = await db
+    .select()
+    .from(seatsLockTable)
+    .where(
+      and(
+        eq(seatsLockTable.showId, showId),
+        inArray(seatsLockTable.seatId, seatIds as string[])
+      )
+    )
+    .all();
+
+  const hasLockedSeats = seatLocks.some(
+    (seatLock) =>
+      seatLock.sessionId !== sessionId && seatLock.lockedUntil > new Date()
+  );
+  if (hasLockedSeats) {
+    throw json({ error: "Some seats are already locked" }, { status: 400 });
+  }
+
+  await db
+    .delete(seatsLockTable)
+    .where(
+      or(
+        ...seatLocks.map((seatLock) =>
+          and(
+            eq(seatsLockTable.showId, showId),
+            eq(seatsLockTable.seatId, seatLock.seatId),
+            eq(seatsLockTable.sessionId, seatLock.sessionId),
+            eq(seatsLockTable.lockedUntil, seatLock.lockedUntil)
+          )
+        )
+      )
+    )
+    .run();
+
   await db
     .insert(seatsLockTable)
     .values(
@@ -62,6 +97,7 @@ export const action = async ({
         showId,
         seatId: seatId as string,
         sessionId,
+        lockedUntil: new Date(Date.now() + 5 * 60 * 1000),
       }))
     )
     .run();
