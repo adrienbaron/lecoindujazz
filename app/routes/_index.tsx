@@ -1,12 +1,6 @@
 import { Link } from "@remix-run/react";
 
-const performances = [
-  {
-    id: "MOCK_SHOW_ID",
-    title: "Demo show",
-    date: new Date("2021-09-01"),
-  },
-];
+import { shows } from "~/models/shows";
 
 export default function Index() {
   return (
@@ -16,13 +10,9 @@ export default function Index() {
         <p>Bienvenue à la billetterie du Coin du jazz.</p>
         <p>Choisissez une date pour réserver vos places.</p>
       </div>
-      {performances.map((performance) => (
-        <Link
-          key={performance.id}
-          to={`/book/${performance.id}`}
-          className="btn-primary btn"
-        >
-          {performance.title} - {performance.date.toLocaleDateString("fr-FR")}
+      {shows.map((show) => (
+        <Link key={show.id} to={`/book/${show.id}`} className="btn-primary btn">
+          {show.title} - {show.date.toLocaleDateString("fr-FR")}
         </Link>
       ))}
     </div>
