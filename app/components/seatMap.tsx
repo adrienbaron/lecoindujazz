@@ -2,40 +2,19 @@ import { Form } from "@remix-run/react";
 import classNames from "classnames";
 import React from "react";
 
-import {
-  firstGallerySection,
-  orchestraSection,
-  secondGallerySection,
-  thirdGallerySection,
-} from "~/models/calaisTheatreSeatingPlan";
-import type { SeatSectionType } from "~/utils/seatMap";
-import { isEmptySpace } from "~/utils/seatMap";
-
-const sectionTypeToTitle: Record<SeatSectionType, string> = {
-  ORCHESTRA: "Orchestre",
-  FIRST_GALLERY: "Première galerie",
-  SECOND_GALLERY: "Deuxième galerie",
-  THIRD_GALLERY: "Troisième galerie",
-};
+import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
+import { isEmptySpace, sectionTypeToTitle } from "~/utils/seatMap";
 
 interface SeatMapProps {
   seatIds: string[];
 }
 
 export const SeatMap: React.FC<SeatMapProps> = ({ seatIds }) => {
-  const sections = [
-    thirdGallerySection,
-    secondGallerySection,
-    firstGallerySection,
-    orchestraSection,
-  ];
-
   const seatIdsSet = new Set(seatIds);
-
   return (
     <div className="flex w-full overflow-scroll">
       <Form className="flex flex-col items-center gap-6" method="post">
-        {sections.map((section) => (
+        {calaisTheatreAllSections.map((section) => (
           <div
             key={section.type}
             className="m-auto flex flex-col items-center gap-2"

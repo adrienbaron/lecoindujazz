@@ -498,3 +498,10 @@ export const orchestraSection = generateSeatSection("ORCHESTRA", [
     seatsAfter: generateEmptySpace(7),
   }),
 ]);
+
+export const calaisTheatreAllSections = [
+  thirdGallerySection,
+  secondGallerySection,
+  firstGallerySection,
+  orchestraSection,
+];

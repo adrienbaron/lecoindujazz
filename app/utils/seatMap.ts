@@ -11,6 +11,7 @@ export type Seat = {
   id: string;
   num: number;
   rowLetter: RowLetter;
+  sectionType: SeatSectionType;
 } & SeatAttributes;
 
 export type EmptySpace = { isEmpty: true } & (
@@ -31,6 +32,13 @@ export type SeatSectionType =
   | "FIRST_GALLERY"
   | "SECOND_GALLERY"
   | "THIRD_GALLERY";
+
+export const sectionTypeToTitle: Record<SeatSectionType, string> = {
+  ORCHESTRA: "Orchestre",
+  FIRST_GALLERY: "Première galerie",
+  SECOND_GALLERY: "Deuxième galerie",
+  THIRD_GALLERY: "Troisième galerie",
+};
 
 export interface SeatSection {
   type: SeatSectionType;
@@ -55,6 +63,7 @@ export const generateSeatSection = (
         ...seat,
         id: `${type}|${row.letter}|${seat.num}${seat.isBis ? "|bis" : ""}`,
         rowLetter: row.letter,
+        sectionType: type,
       };
     }),
   })),
@@ -81,7 +90,7 @@ export const generateRowLabel = (): EmptySpace => ({
   type: "row-label",
 });
 
-export type SeatForRow = Omit<Seat, "id" | "rowLetter">;
+export type SeatForRow = Omit<Seat, "id" | "rowLetter" | "sectionType">;
 type SeatRowForSection = Omit<SeatRow, "seats"> & {
   seats: (SeatForRow | EmptySpace)[];
 };
@@ -168,3 +177,16 @@ export const seatsIncreasing = (
   seatAttributes: SeatAttributes = {}
 ): SeatForRow[] =>
   numsIncreasing(numSeats, max).map((num) => ({ num, ...seatAttributes }));
+
+export const getSeatByIdMap = (sections: SeatSection[]) => {
+  const seatByIdMap = new Map<string, Seat>();
+  sections.forEach((section) => {
+    section.rows.forEach((row) => {
+      row.seats.forEach((seat) => {
+        if (isEmptySpace(seat)) return;
+        seatByIdMap.set(seat.id, seat);
+      });
+    });
+  });
+  return seatByIdMap;
+};
