@@ -1,11 +1,12 @@
 import { Form } from "@remix-run/react";
-import type { LoaderFunctionArgs } from "@remix-run/router";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
 import { redirect } from "@remix-run/router";
 import { and, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { useMemo } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
+import Stripe from "stripe";
 
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
 import type { SeatModel } from "~/models/dbSchema";
@@ -13,6 +14,8 @@ import { seatsLockTable } from "~/models/dbSchema";
 import { showByIdMap } from "~/models/shows";
 import { getSession } from "~/session";
 import { getSeatByIdMap, sectionTypeToTitle } from "~/utils/seatMap";
+
+const YOUR_DOMAIN = "http://127.0.0.1:8788";
 
 async function getSeatLocksForSession(
   db: BaseSQLiteDatabase<"async", D1Result>,
@@ -39,8 +42,48 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
   const sessionId = session.get("sessionId");
   const db = drizzle(context.DB as D1Database);
   const allSeatLocksForSession = await getSeatLocksForSession(db, sessionId);
+  if (!allSeatLocksForSession.length) {
+    return redirect("/");
+  }
 
   return typedjson(allSeatLocksForSession);
+};
+
+export const action = async ({ context, request }: ActionFunctionArgs) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  if (!session.get("sessionId")) {
+    return redirect("/");
+  }
+
+  const sessionId = session.get("sessionId");
+  const db = drizzle(context.DB as D1Database);
+  const allSeatLocksForSession = await getSeatLocksForSession(db, sessionId);
+  if (!allSeatLocksForSession.length) {
+    return redirect("/");
+  }
+
+  const stripe = new Stripe(context.STRIPE_PK as string, {
+    apiVersion: "2022-11-15",
+    httpClient: Stripe.createFetchHttpClient(), // ensure we use a Fetch client, and not Node's `http`
+  });
+
+  const stripeSession = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price: "price_1MvN50Fwi1kE0EYccGLM3k4Z",
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    success_url: `${YOUR_DOMAIN}?success=true`,
+    cancel_url: `${YOUR_DOMAIN}?canceled=true`,
+  });
+
+  if (!stripeSession.url) {
+    throw new Error("Stripe session URL is missing");
+  }
+
+  return redirect(stripeSession.url);
 };
 
 export default function Basket() {

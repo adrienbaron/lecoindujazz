@@ -2,3 +2,6 @@
 binding = "DB"
 database_name = "lecoindujazz-dev"
 database_id = "223a6cf6-cde5-44af-a3f4-32496824f993"
+
+[vars]
+STRIPE_PK=""
