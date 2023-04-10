@@ -1,8 +1,9 @@
 import { json } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
-import { and, eq, inArray, or } from "drizzle-orm";
+import { and, eq, gt, inArray, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
+import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
 import { SeatMap } from "~/components/seatMap";
@@ -27,7 +28,12 @@ export const loader = async ({
   const allLockedSeats = await db
     .select()
     .from(seatsLockTable)
-    .where(eq(seatsLockTable.showId, showId))
+    .where(
+      and(
+        eq(seatsLockTable.showId, showId),
+        gt(seatsLockTable.lockedUntil, new Date())
+      )
+    )
     .all();
 
   return json(allLockedSeats, {
@@ -90,6 +96,7 @@ export const action = async ({
     )
     .run();
 
+  const lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
   await db
     .insert(seatsLockTable)
     .values(
@@ -97,18 +104,16 @@ export const action = async ({
         showId,
         seatId: seatId as string,
         sessionId,
-        lockedUntil: new Date(Date.now() + 5 * 60 * 1000),
+        lockedUntil,
       }))
     )
     .run();
 
-  return json({ success: true });
+  return redirect("/basket");
 };
 
 export default function Book() {
   const seats = useLoaderData<typeof loader>();
-  console.log(seats);
-
   return (
     <div className="space-y-2">
       <h1 className="fluid-2xl">Billetterie Le Coin du jazz</h1>
