@@ -63,6 +63,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({ seatIds }) => {
                       );
                     } else {
                       const isBooked = seatIdsSet.has(seat.id);
+                      const canBeBooked = !seat.isSecurity && !isBooked;
 
                       return (
                         <div key={index}>
@@ -71,19 +72,20 @@ export const SeatMap: React.FC<SeatMapProps> = ({ seatIds }) => {
                             name="seat"
                             id={seat.id}
                             value={seat.id}
+                            disabled={seat.isSecurity || isBooked}
                             className="peer absolute h-0 w-0 opacity-0"
                           />
                           <label
                             htmlFor={seat.id}
                             className={classNames(
                               "flex h-8 w-8 shrink-0 flex-col items-center justify-center text-sm",
-                              "peer-checked:border-4 border-green-400 peer-focus:ring-2",
-                              (seat.isSecurity || isBooked) && "bg-red-500",
-                              !seat.isSecurity && "bg-green-700",
+                              "peer-checked:border-4 peer-checked:border-green-400 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-focus",
+                              canBeBooked && "bg-green-700",
+                              !canBeBooked && "bg-red-500 opacity-30",
                               seat.hasRestrictedView &&
-                                "border-2 border-orange-300",
+                                "border-4 border-orange-300",
                               seat.isWheelchairAccessible &&
-                                "border-2 border-blue-900"
+                                "border-4 border-blue-300"
                             )}
                           >
                             <span className="leading-3">{seat.num}</span>
