@@ -1,27 +1,24 @@
+import { Form } from "@remix-run/react";
 import type { LoaderFunctionArgs } from "@remix-run/router";
+import { redirect } from "@remix-run/router";
 import { and, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { useMemo } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { v4 as uuidv4 } from "uuid";
 
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
 import type { SeatModel } from "~/models/dbSchema";
 import { seatsLockTable } from "~/models/dbSchema";
 import { showByIdMap } from "~/models/shows";
-import { commitSession, getSession } from "~/session";
+import { getSession } from "~/session";
 import { getSeatByIdMap, sectionTypeToTitle } from "~/utils/seatMap";
 
-export const loader = async ({ context, request }: LoaderFunctionArgs) => {
-  const session = await getSession(request.headers.get("Cookie"));
-  if (!session.get("sessionId")) {
-    session.set("sessionId", uuidv4());
-  }
-
-  const sessionId = session.get("sessionId");
-
-  const db = drizzle(context.DB as D1Database);
-  const allSeatLocksInBasketForSession = await db
+async function getSeatLocksForSession(
+  db: BaseSQLiteDatabase<"async", D1Result>,
+  sessionId: string
+) {
+  return await db
     .select()
     .from(seatsLockTable)
     .where(
@@ -31,29 +28,31 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
       )
     )
     .all();
+}
 
-  return typedjson(allSeatLocksInBasketForSession, {
-    headers: {
-      "Set-Cookie": await commitSession(session, {
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      }),
-    },
-  });
+export const loader = async ({ context, request }: LoaderFunctionArgs) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  if (!session.get("sessionId")) {
+    return redirect("/");
+  }
+
+  const sessionId = session.get("sessionId");
+  const db = drizzle(context.DB as D1Database);
+  const allSeatLocksForSession = await getSeatLocksForSession(db, sessionId);
+
+  return typedjson(allSeatLocksForSession);
 };
 
 export default function Basket() {
-  const allSeatLocksInBasketForSession = useTypedLoaderData<SeatModel[]>();
+  const allSeatLocksForSession = useTypedLoaderData<SeatModel[]>();
 
-  const seatLocksPerShowId = allSeatLocksInBasketForSession.reduce(
-    (acc, seat) => {
-      if (!acc[seat.showId]) {
-        acc[seat.showId] = [];
-      }
-      acc[seat.showId].push(seat);
-      return acc;
-    },
-    {} as Record<string, SeatModel[]>
-  );
+  const seatLocksPerShowId = allSeatLocksForSession.reduce((acc, seat) => {
+    if (!acc[seat.showId]) {
+      acc[seat.showId] = [];
+    }
+    acc[seat.showId].push(seat);
+    return acc;
+  }, {} as Record<string, SeatModel[]>);
 
   const seatById = useMemo(() => getSeatByIdMap(calaisTheatreAllSections), []);
   return (
@@ -92,6 +91,12 @@ export default function Basket() {
           );
         })}
       </div>
+
+      <Form method="post">
+        <button type="submit" className="btn-primary btn">
+          Valider le panier
+        </button>
+      </Form>
     </div>
   );
 }
