@@ -2,12 +2,12 @@ import { json } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
 import { and, eq, gt, inArray } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
 import { SeatMap } from "~/components/seatMap";
 import { seatsLockTable } from "~/models/dbSchema";
+import { getDbFromContext } from "~/services/db.service.server";
 import { commitSession, getSession } from "~/session";
 
 export const loader = async ({
@@ -24,7 +24,7 @@ export const loader = async ({
     session.set("sessionId", uuidv4());
   }
 
-  const db = drizzle(context.DB as D1Database);
+  const db = getDbFromContext(context);
   const allLockedSeats = await db
     .select()
     .from(seatsLockTable)
@@ -60,7 +60,7 @@ export const action = async ({
   const formData = await request.formData();
   const seatIds = formData.getAll("seat");
 
-  const db = drizzle(context.DB as D1Database);
+  const db = getDbFromContext(context);
   const seatLocks = await db
     .select()
     .from(seatsLockTable)

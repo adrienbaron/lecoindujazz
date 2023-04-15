@@ -83,7 +83,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({ seatIds }) => {
         ))}
 
         <button type="submit" className="btn-primary btn">
-          Réserver
+          Ajouter au panier
         </button>
       </Form>
     </div>
