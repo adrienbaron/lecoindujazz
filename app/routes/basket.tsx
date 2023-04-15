@@ -67,13 +67,29 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
     httpClient: Stripe.createFetchHttpClient(), // ensure we use a Fetch client, and not Node's `http`
   });
 
+  const seatById = getSeatByIdMap(calaisTheatreAllSections);
+
   const stripeSession = await stripe.checkout.sessions.create({
-    line_items: [
-      {
-        price: "price_1MvN50Fwi1kE0EYccGLM3k4Z",
+    line_items: allSeatLocksForSession.map((seatLock) => {
+      const show = showByIdMap.get(seatLock.showId);
+      const seat = seatById.get(seatLock.seatId);
+      if (!show || !seat) {
+        throw new Error("Show or seat not found");
+      }
+
+      return {
         quantity: 1,
-      },
-    ],
+        price_data: {
+          unit_amount: 1050,
+          product_data: {
+            name: `${show.title}: ${sectionTypeToTitle[seat.sectionType]}: ${
+              seat.rowLetter
+            } - ${seat.num}`,
+          },
+          currency: "EUR",
+        },
+      };
+    }),
     mode: "payment",
     success_url: `${YOUR_DOMAIN}?success=true`,
     cancel_url: `${YOUR_DOMAIN}?canceled=true`,
