@@ -14,7 +14,7 @@ export const purchaseTable = sqliteTable("purchases", {
 });
 
 export const purchasedSeatsTable = sqliteTable(
-  "customers",
+  "purchased_seats",
   {
     showId: text("show_id").notNull(),
     seatId: text("seat_id").notNull(),
