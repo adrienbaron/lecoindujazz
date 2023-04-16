@@ -14,6 +14,12 @@ export type Seat = {
   sectionType: SeatSectionType;
 } & SeatAttributes;
 
+export interface UnavailableSeat {
+  showId: string;
+  seatId: string;
+  reason: "locked" | "purchased";
+}
+
 export type EmptySpace = { isEmpty: true } & (
   | { type: "spacing" }
   | { type: "row-label" }

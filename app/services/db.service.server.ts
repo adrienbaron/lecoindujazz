@@ -7,6 +7,7 @@ import {
   purchasedSeatsTable,
   purchaseTable,
 } from "~/models/dbSchema";
+import type { UnavailableSeat } from "~/utils/seatMap";
 
 const contextWithDb = (
   context: Record<string, unknown>
@@ -22,6 +23,46 @@ export const getDbFromContext = (
   }
 
   return drizzle(context.DB);
+};
+
+export const getAllUnavailableSeatsForShow = async (
+  db: DrizzleD1Database,
+  showId: string
+): Promise<UnavailableSeat[]> => {
+  const [lockedSeats, purchasedSeats] = await Promise.all([
+    db
+      .select({
+        seatId: lockedSeatsTable.seatId,
+      })
+      .from(lockedSeatsTable)
+      .where(
+        and(
+          eq(lockedSeatsTable.showId, showId),
+          gt(lockedSeatsTable.lockedUntil, new Date())
+        )
+      )
+      .all(),
+    db
+      .select({
+        seatId: purchasedSeatsTable.seatId,
+      })
+      .from(purchasedSeatsTable)
+      .where(eq(purchasedSeatsTable.showId, showId))
+      .all(),
+  ]);
+
+  return [
+    ...lockedSeats.map((seat) => ({
+      showId,
+      seatId: seat.seatId,
+      reason: "locked" as const,
+    })),
+    ...purchasedSeats.map((seat) => ({
+      showId,
+      seatId: seat.seatId,
+      reason: "purchased" as const,
+    })),
+  ];
 };
 
 export async function getLockedSeatsForSession(

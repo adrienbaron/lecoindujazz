@@ -1,13 +1,16 @@
 import { json } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
-import { and, eq, gt, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
 import { SeatMap } from "~/components/seatMap";
 import { lockedSeatsTable } from "~/models/dbSchema";
-import { getDbFromContext } from "~/services/db.service.server";
+import {
+  getAllUnavailableSeatsForShow,
+  getDbFromContext,
+} from "~/services/db.service.server";
 import { commitSession, getSession } from "~/session";
 
 export const loader = async ({
@@ -25,24 +28,18 @@ export const loader = async ({
   }
 
   const db = getDbFromContext(context);
-  const allLockedSeats = await db
-    .select()
-    .from(lockedSeatsTable)
-    .where(
-      and(
-        eq(lockedSeatsTable.showId, showId),
-        gt(lockedSeatsTable.lockedUntil, new Date())
-      )
-    )
-    .all();
+  const allUnavailableSeats = await getAllUnavailableSeatsForShow(db, showId);
 
-  return json(allLockedSeats, {
-    headers: {
-      "Set-Cookie": await commitSession(session, {
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      }),
-    },
-  });
+  return json(
+    { allUnavailableSeats },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session, {
+          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        }),
+      },
+    }
+  );
 };
 
 export const action = async ({
@@ -113,12 +110,12 @@ export const action = async ({
 };
 
 export default function Book() {
-  const seats = useLoaderData<typeof loader>();
+  const { allUnavailableSeats } = useLoaderData<typeof loader>();
   return (
     <div className="space-y-2">
       <h1 className="fluid-2xl">Billetterie Le Coin du jazz</h1>
       <p>Bienvenue à la billetterie du Coin du jazz.</p>
-      <SeatMap seatIds={seats.map(({ seatId }) => seatId)} />
+      <SeatMap unavailableSeats={allUnavailableSeats} />
     </div>
   );
 }

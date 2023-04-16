@@ -3,14 +3,15 @@ import classNames from "classnames";
 import React from "react";
 
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
+import type { UnavailableSeat } from "~/utils/seatMap";
 import { isEmptySpace, sectionTypeToTitle } from "~/utils/seatMap";
 
 interface SeatMapProps {
-  seatIds: string[];
+  unavailableSeats: UnavailableSeat[];
 }
 
-export const SeatMap: React.FC<SeatMapProps> = ({ seatIds }) => {
-  const seatIdsSet = new Set(seatIds);
+export const SeatMap: React.FC<SeatMapProps> = ({ unavailableSeats }) => {
+  const seatIdsSet = new Set(unavailableSeats.map((seat) => seat.seatId));
   return (
     <div className="flex w-full overflow-scroll">
       <Form className="flex flex-col items-center gap-6" method="post">
