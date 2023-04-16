@@ -2,6 +2,11 @@ import type { ActionFunction } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
 import Stripe from "stripe";
 
+import {
+  getDbFromContext,
+  registerPurchase,
+} from "~/services/db.service.server";
+
 export const action: ActionFunction = async ({ context, request }) => {
   const payload = await request.text();
   const sig = request.headers.get("stripe-signature") as string;
@@ -28,17 +33,15 @@ export const action: ActionFunction = async ({ context, request }) => {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
 
-    const sessionWithLineItems = await stripe.checkout.sessions.retrieve(
-      session.id,
-      {
-        expand: ["line_items"],
-      }
-    );
-    const lineItems = session.line_items;
-    console.log(
-      "Checkout session completed",
-      JSON.stringify(sessionWithLineItems, null, 2)
-    );
+    if (!session.customer_details?.name || !session.customer_details?.email) {
+      throw new Error("No name or email found");
+    }
+
+    const db = getDbFromContext(context);
+    await registerPurchase(db, session.id, {
+      name: session.customer_details.name,
+      email: session.customer_details.email,
+    });
   }
 
   return json({ success: true });

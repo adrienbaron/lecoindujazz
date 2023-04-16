@@ -62,7 +62,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
         },
       };
     }),
-    expires_at: lockedUntil.getTime() / 1000,
+    expires_at: Math.ceil(lockedUntil.getTime() / 1000),
     mode: "payment",
     success_url: `${YOUR_DOMAIN}?success=true`,
     cancel_url: `${YOUR_DOMAIN}?canceled=true`,
