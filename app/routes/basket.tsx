@@ -1,12 +1,14 @@
 import { Form, Link } from "@remix-run/react";
 import type { ActionFunctionArgs } from "@remix-run/router";
 import { redirect } from "@remix-run/router";
+import { eq } from "drizzle-orm";
 import { useMemo } from "react";
 import { useTypedRouteLoaderData } from "remix-typedjson";
 import Stripe from "stripe";
 
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
-import type { SeatModel } from "~/models/dbSchema";
+import type { LockedSeatModel } from "~/models/dbSchema";
+import { lockedSeatsTable } from "~/models/dbSchema";
 import { showByIdMap } from "~/models/shows";
 import {
   getDbFromContext,
@@ -30,13 +32,15 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
     return redirect("/");
   }
 
+  // Lock seats for 45 minutes
+  const lockedUntil = new Date(Date.now() + 45 * 60 * 1000);
+
   const stripe = new Stripe(context.STRIPE_PK as string, {
     apiVersion: "2022-11-15",
     httpClient: Stripe.createFetchHttpClient(), // ensure we use a Fetch client, and not Node's `http`
   });
 
   const seatById = getSeatByIdMap(calaisTheatreAllSections);
-
   const stripeSession = await stripe.checkout.sessions.create({
     line_items: allSeatLocksForSession.map((seatLock) => {
       const show = showByIdMap.get(seatLock.showId);
@@ -52,12 +56,13 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
           product_data: {
             name: `${show.title}: ${sectionTypeToTitle[seat.sectionType]}: ${
               seat.rowLetter
-            } - ${seat.num}`,
+            } - ${seat.num}${seat.isBis ? "bis" : ""}`,
           },
           currency: "EUR",
         },
       };
     }),
+    expires_at: lockedUntil.getTime() / 1000,
     mode: "payment",
     success_url: `${YOUR_DOMAIN}?success=true`,
     cancel_url: `${YOUR_DOMAIN}?canceled=true`,
@@ -67,12 +72,18 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
     throw new Error("Stripe session URL is missing");
   }
 
+  await db
+    .update(lockedSeatsTable)
+    .set({ lockedUntil, stripeCheckoutSessionId: stripeSession.id })
+    .where(eq(lockedSeatsTable.sessionId, sessionId))
+    .run();
+
   return redirect(stripeSession.url);
 };
 
 export default function Basket() {
   const data = useTypedRouteLoaderData<{
-    allSeatLocksForSession: SeatModel[];
+    allSeatLocksForSession: LockedSeatModel[];
   }>("root");
   if (!data) {
     throw new Error("No data");
@@ -85,7 +96,7 @@ export default function Basket() {
     }
     acc[seat.showId].push(seat);
     return acc;
-  }, {} as Record<string, SeatModel[]>);
+  }, {} as Record<string, LockedSeatModel[]>);
 
   const seatById = useMemo(() => getSeatByIdMap(calaisTheatreAllSections), []);
   return (

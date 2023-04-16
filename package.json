@@ -8,12 +8,13 @@
     "dev": "npm run build:css && remix build && run-p \"dev:*\"",
     "dev:css": "npm run generate:css -- --watch",
     "dev:remix": "remix watch",
-    "dev:wrangler": "export $(cat .env | xargs) && cross-env NODE_ENV=development wrangler pages dev ./public --compatibility-flag=streams_enable_constructors --persist --local -b STRIPE_PK=$STRIPE_PK",
+    "dev:wrangler": "export $(cat .env | xargs) && cross-env NODE_ENV=development wrangler pages dev ./public --compatibility-flag=streams_enable_constructors --persist --local -b STRIPE_PK=$STRIPE_PK -b STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET",
     "generate:css": "npx tailwindcss  -m -i ./styles/app.css -o ./app/tailwind.css",
     "start": "cross-env NODE_ENV=production npm run dev:wrangler",
     "lint": "eslint --fix 'app/**/*.{ts,tsx}'",
     "type:check": "tsc --noEmit",
-    "generate": "drizzle-kit generate:sqlite --schema=app/models/dbSchema.ts"
+    "generate": "drizzle-kit generate:sqlite --schema=app/models/dbSchema.ts",
+    "stripe": "stripe listen --forward-to localhost:8788/hooks/stripe"
   },
   "dependencies": {
     "@mdi/js": "^7.2.96",

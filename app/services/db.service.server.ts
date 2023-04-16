@@ -2,7 +2,7 @@ import { and, eq, gt } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { drizzle } from "drizzle-orm/d1";
 
-import { seatsLockTable } from "~/models/dbSchema";
+import { lockedSeatsTable } from "~/models/dbSchema";
 
 const contextWithDb = (
   context: Record<string, unknown>
@@ -26,11 +26,11 @@ export async function getSeatLocksForSession(
 ) {
   return await db
     .select()
-    .from(seatsLockTable)
+    .from(lockedSeatsTable)
     .where(
       and(
-        eq(seatsLockTable.sessionId, sessionId),
-        gt(seatsLockTable.lockedUntil, new Date())
+        eq(lockedSeatsTable.sessionId, sessionId),
+        gt(lockedSeatsTable.lockedUntil, new Date())
       )
     )
     .all();

@@ -6,7 +6,7 @@ import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
 import { SeatMap } from "~/components/seatMap";
-import { seatsLockTable } from "~/models/dbSchema";
+import { lockedSeatsTable } from "~/models/dbSchema";
 import { getDbFromContext } from "~/services/db.service.server";
 import { commitSession, getSession } from "~/session";
 
@@ -27,11 +27,11 @@ export const loader = async ({
   const db = getDbFromContext(context);
   const allLockedSeats = await db
     .select()
-    .from(seatsLockTable)
+    .from(lockedSeatsTable)
     .where(
       and(
-        eq(seatsLockTable.showId, showId),
-        gt(seatsLockTable.lockedUntil, new Date())
+        eq(lockedSeatsTable.showId, showId),
+        gt(lockedSeatsTable.lockedUntil, new Date())
       )
     )
     .all();
@@ -63,11 +63,11 @@ export const action = async ({
   const db = getDbFromContext(context);
   const seatLocks = await db
     .select()
-    .from(seatsLockTable)
+    .from(lockedSeatsTable)
     .where(
       and(
-        eq(seatsLockTable.showId, showId),
-        inArray(seatsLockTable.seatId, seatIds as string[])
+        eq(lockedSeatsTable.showId, showId),
+        inArray(lockedSeatsTable.seatId, seatIds as string[])
       )
     )
     .all();
@@ -83,13 +83,13 @@ export const action = async ({
   await Promise.all(
     seatLocks.map((seatLock) =>
       db
-        .delete(seatsLockTable)
+        .delete(lockedSeatsTable)
         .where(
           and(
-            eq(seatsLockTable.showId, showId),
-            eq(seatsLockTable.seatId, seatLock.seatId),
-            eq(seatsLockTable.sessionId, seatLock.sessionId),
-            eq(seatsLockTable.lockedUntil, seatLock.lockedUntil)
+            eq(lockedSeatsTable.showId, showId),
+            eq(lockedSeatsTable.seatId, seatLock.seatId),
+            eq(lockedSeatsTable.sessionId, seatLock.sessionId),
+            eq(lockedSeatsTable.lockedUntil, seatLock.lockedUntil)
           )
         )
         .run()
@@ -98,7 +98,7 @@ export const action = async ({
 
   const lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
   await db
-    .insert(seatsLockTable)
+    .insert(lockedSeatsTable)
     .values(
       seatIds.map((seatId) => ({
         showId,

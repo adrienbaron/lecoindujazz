@@ -12,7 +12,7 @@ import type { LoaderFunctionArgs } from "@remix-run/router";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
-import type { SeatModel } from "~/models/dbSchema";
+import type { LockedSeatModel } from "~/models/dbSchema";
 import {
   getDbFromContext,
   getSeatLocksForSession,
@@ -54,7 +54,7 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
 
 export default function App() {
   const { allSeatLocksForSession } = useTypedLoaderData<{
-    allSeatLocksForSession: SeatModel[];
+    allSeatLocksForSession: LockedSeatModel[];
   }>();
 
   return (
