@@ -24,7 +24,7 @@ export const getDbFromContext = (
   return drizzle(context.DB);
 };
 
-export async function getSeatLocksForSession(
+export async function getLockedSeatsForSession(
   db: DrizzleD1Database,
   sessionId: string
 ) {

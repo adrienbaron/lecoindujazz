@@ -12,7 +12,7 @@ import { lockedSeatsTable } from "~/models/dbSchema";
 import { showByIdMap } from "~/models/shows";
 import {
   getDbFromContext,
-  getSeatLocksForSession,
+  getLockedSeatsForSession,
 } from "~/services/db.service.server";
 import { getSession } from "~/session";
 import { getSeatByIdMap, sectionTypeToTitle } from "~/utils/seatMap";
@@ -27,8 +27,8 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
   const sessionId = session.get("sessionId");
   const db = getDbFromContext(context);
 
-  const allSeatLocksForSession = await getSeatLocksForSession(db, sessionId);
-  if (!allSeatLocksForSession.length) {
+  const lockedSeatsForSession = await getLockedSeatsForSession(db, sessionId);
+  if (!lockedSeatsForSession.length) {
     return redirect("/");
   }
 
@@ -42,7 +42,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
 
   const seatById = getSeatByIdMap(calaisTheatreAllSections);
   const stripeSession = await stripe.checkout.sessions.create({
-    line_items: allSeatLocksForSession.map((seatLock) => {
+    line_items: lockedSeatsForSession.map((seatLock) => {
       const show = showByIdMap.get(seatLock.showId);
       const seat = seatById.get(seatLock.seatId);
       if (!show || !seat) {
@@ -83,14 +83,14 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
 
 export default function Basket() {
   const data = useTypedRouteLoaderData<{
-    allSeatLocksForSession: LockedSeatModel[];
+    lockedSeatsForSession: LockedSeatModel[];
   }>("root");
   if (!data) {
     throw new Error("No data");
   }
 
-  const { allSeatLocksForSession } = data;
-  const seatLocksPerShowId = allSeatLocksForSession.reduce((acc, seat) => {
+  const { lockedSeatsForSession } = data;
+  const seatLocksPerShowId = lockedSeatsForSession.reduce((acc, seat) => {
     if (!acc[seat.showId]) {
       acc[seat.showId] = [];
     }
@@ -136,14 +136,14 @@ export default function Basket() {
         })}
       </div>
 
-      {allSeatLocksForSession.length > 0 && (
+      {lockedSeatsForSession.length > 0 && (
         <Form method="post">
           <button type="submit" className="btn-primary btn">
             Valider le panier
           </button>
         </Form>
       )}
-      {allSeatLocksForSession.length === 0 && (
+      {lockedSeatsForSession.length === 0 && (
         <div className="flex flex-col gap-4 text-center">
           <p className="fluid-lg">Votre panier est vide</p>
           <Link to={"/"} className="btn-primary btn self-center">

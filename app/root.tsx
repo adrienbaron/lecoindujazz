@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 import type { LockedSeatModel } from "~/models/dbSchema";
 import {
   getDbFromContext,
-  getSeatLocksForSession,
+  getLockedSeatsForSession,
 } from "~/services/db.service.server";
 import { commitSession, getSession } from "~/session";
 
@@ -38,10 +38,10 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
 
   const sessionId = session.get("sessionId");
   const db = getDbFromContext(context);
-  const allSeatLocksForSession = await getSeatLocksForSession(db, sessionId);
+  const lockedSeatsForSession = await getLockedSeatsForSession(db, sessionId);
 
   return typedjson(
-    { allSeatLocksForSession },
+    { lockedSeatsForSession },
     {
       headers: {
         "Set-Cookie": await commitSession(session, {
@@ -53,8 +53,8 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
 };
 
 export default function App() {
-  const { allSeatLocksForSession } = useTypedLoaderData<{
-    allSeatLocksForSession: LockedSeatModel[];
+  const { lockedSeatsForSession } = useTypedLoaderData<{
+    lockedSeatsForSession: LockedSeatModel[];
   }>();
 
   return (
@@ -72,7 +72,7 @@ export default function App() {
           </div>
           <div className="flex-none">
             <Link to={"/basket"} className="btn-ghost btn">
-              Panier ({allSeatLocksForSession.length})
+              Panier ({lockedSeatsForSession.length})
             </Link>
           </div>
         </header>
