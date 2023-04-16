@@ -1,6 +1,6 @@
+import type { ActionArgs, LoaderArgs } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
 import { and, eq, inArray } from "drizzle-orm";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
@@ -17,7 +17,7 @@ export const loader = async ({
   context,
   request,
   params: { showId },
-}: LoaderFunctionArgs) => {
+}: LoaderArgs) => {
   if (!showId) {
     throw json({ error: "Missing showId" }, { status: 400 });
   }
@@ -46,7 +46,7 @@ export const action = async ({
   request,
   context,
   params: { showId },
-}: ActionFunctionArgs) => {
+}: ActionArgs) => {
   if (!showId) {
     throw json({ error: "Missing showId" }, { status: 400 });
   }

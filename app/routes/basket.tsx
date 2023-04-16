@@ -1,5 +1,5 @@
+import type { ActionArgs } from "@remix-run/cloudflare";
 import { Form, Link } from "@remix-run/react";
-import type { ActionFunctionArgs } from "@remix-run/router";
 import { redirect } from "@remix-run/router";
 import { eq } from "drizzle-orm";
 import { useMemo } from "react";
@@ -19,7 +19,7 @@ import { getSeatByIdMap, sectionTypeToTitle } from "~/utils/seatMap";
 
 const YOUR_DOMAIN = "http://127.0.0.1:8788";
 
-export const action = async ({ context, request }: ActionFunctionArgs) => {
+export const action = async ({ context, request }: ActionArgs) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (!session.get("sessionId")) {
     return redirect("/");

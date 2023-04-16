@@ -1,4 +1,8 @@
-import type { LinksFunction, MetaFunction } from "@remix-run/cloudflare";
+import type {
+  LinksFunction,
+  LoaderArgs,
+  MetaFunction,
+} from "@remix-run/cloudflare";
 import {
   Link,
   Links,
@@ -8,7 +12,6 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import type { LoaderFunctionArgs } from "@remix-run/router";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
@@ -30,7 +33,7 @@ export const meta: MetaFunction = () => ({
   "theme-color": "#202021",
 });
 
-export const loader = async ({ context, request }: LoaderFunctionArgs) => {
+export const loader = async ({ context, request }: LoaderArgs) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (!session.get("sessionId")) {
     session.set("sessionId", uuidv4());
