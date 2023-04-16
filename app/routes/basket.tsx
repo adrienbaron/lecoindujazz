@@ -17,8 +17,6 @@ import {
 import { getSession } from "~/session";
 import { getSeatByIdMap, sectionTypeToTitle } from "~/utils/seatMap";
 
-const YOUR_DOMAIN = "http://127.0.0.1:8788";
-
 export const action = async ({ context, request }: ActionArgs) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (!session.get("sessionId")) {
@@ -39,6 +37,8 @@ export const action = async ({ context, request }: ActionArgs) => {
     apiVersion: "2022-11-15",
     httpClient: Stripe.createFetchHttpClient(), // ensure we use a Fetch client, and not Node's `http`
   });
+
+  const url = new URL(request.url);
 
   const seatById = getSeatByIdMap(calaisTheatreAllSections);
   const stripeSession = await stripe.checkout.sessions.create({
@@ -64,8 +64,8 @@ export const action = async ({ context, request }: ActionArgs) => {
     }),
     expires_at: Math.ceil(lockedUntil.getTime() / 1000),
     mode: "payment",
-    success_url: `${YOUR_DOMAIN}?success=true`,
-    cancel_url: `${YOUR_DOMAIN}?canceled=true`,
+    success_url: `${url.protocol}//${url.host}?success=true`,
+    cancel_url: `${url.protocol}//${url.host}?canceled=true`,
   });
 
   if (!stripeSession.url) {
