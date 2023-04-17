@@ -79,7 +79,7 @@ export default function App() {
             </Link>
           </div>
         </header>
-        <main className="m-auto p-2 md:p-4 lg:px-6">
+        <main>
           <Outlet />
         </main>
         <ScrollRestoration />

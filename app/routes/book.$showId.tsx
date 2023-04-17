@@ -1,12 +1,14 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
-import { useLoaderData } from "@remix-run/react";
+import { Form, useLoaderData, useParams } from "@remix-run/react";
 import { and, eq, inArray } from "drizzle-orm";
+import React from "react";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
 import { SeatMap } from "~/components/seatMap";
 import { lockedSeatsTable } from "~/models/dbSchema";
+import { showByIdMap } from "~/models/shows";
 import {
   getAllUnavailableSeatsForShow,
   getDbFromContext,
@@ -111,11 +113,32 @@ export const action = async ({
 
 export default function Book() {
   const { allUnavailableSeats } = useLoaderData<typeof loader>();
+  const { showId } = useParams<{ showId: string }>();
+  if (!showId) {
+    throw new Error("Missing showId");
+  }
+
+  const show = showByIdMap.get(showId);
+  if (!show) {
+    throw new Error(`Show not found for id ${showId}`);
+  }
+
   return (
-    <div className="space-y-2">
-      <h1 className="fluid-2xl">Billetterie Le Coin du jazz</h1>
-      <p>Bienvenue à la billetterie du Coin du jazz.</p>
-      <SeatMap unavailableSeats={allUnavailableSeats} />
-    </div>
+    <Form
+      className="grid w-full grid-rows-[80vh_0] lg:grid-cols-[auto_300px] lg:grid-rows-none"
+      method="post"
+    >
+      <div className="flex flex-col gap-2 overflow-hidden p-2 md:p-4 lg:px-6">
+        <h1 className="fluid-2xl">
+          {show.title} - {show.date.toLocaleDateString("fr-FR")}
+        </h1>
+        <SeatMap unavailableSeats={allUnavailableSeats} />
+      </div>
+      <section className="fixed inset-x-0 bottom-0 flex justify-center bg-base-200 p-4 lg:relative lg:-mr-6">
+        <button type="submit" className="btn-primary btn block">
+          Ajouter au panier
+        </button>
+      </section>
+    </Form>
   );
 }

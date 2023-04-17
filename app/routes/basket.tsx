@@ -100,7 +100,7 @@ export default function Basket() {
 
   const seatById = useMemo(() => getSeatByIdMap(calaisTheatreAllSections), []);
   return (
-    <div className="mx-auto flex max-w-screen-sm flex-col gap-4">
+    <div className="mx-auto flex max-w-screen-sm flex-col gap-4 p-2 md:p-4 lg:px-6">
       <h1 className="fluid-2xl">Panier</h1>
       <div className="flex flex-col gap-2">
         {Object.entries(seatLocksPerShowId).map(([showId, seatLocks]) => {
