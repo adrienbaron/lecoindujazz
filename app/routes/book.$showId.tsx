@@ -6,7 +6,7 @@ import React from "react";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
-import { SeatMap } from "~/components/seatMap";
+import { SeatMap } from "~/components/seatMap/seatMap";
 import { lockedSeatsTable } from "~/models/dbSchema";
 import { showByIdMap, showToHumanString } from "~/models/shows";
 import {
