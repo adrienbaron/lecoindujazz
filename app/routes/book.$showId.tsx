@@ -2,18 +2,25 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
 import { Form, useLoaderData, useParams } from "@remix-run/react";
 import { and, eq, inArray } from "drizzle-orm";
-import React from "react";
+import React, { useCallback } from "react";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
 import { SeatMap } from "~/components/seatMap/seatMap";
 import { lockedSeatsTable } from "~/models/dbSchema";
+import type { Seat } from "~/models/seatMap";
+import {
+  PRICE_PER_SEAT_IN_CENTS,
+  seatToHumanString,
+  sectionTypeToTitle,
+} from "~/models/seatMap";
 import { showByIdMap, showToHumanString } from "~/models/shows";
 import {
   getAllUnavailableSeatsForShow,
   getDbFromContext,
 } from "~/services/db.service.server";
 import { commitSession, getSession } from "~/session";
+import { formatPrice } from "~/utils/price";
 
 export const loader = async ({
   context,
@@ -113,15 +120,26 @@ export const action = async ({
 
 export default function Book() {
   const { allUnavailableSeats } = useLoaderData<typeof loader>();
+  const [selectedSeats, setSelectedSeats] = React.useState<Seat[]>([]);
+
   const { showId } = useParams<{ showId: string }>();
   if (!showId) {
     throw new Error("Missing showId");
   }
-
   const show = showByIdMap.get(showId);
   if (!show) {
     throw new Error(`Show not found for id ${showId}`);
   }
+
+  const onSeatToggle = useCallback((seat: Seat, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedSeats((selectedSeats) => [...selectedSeats, seat]);
+    } else {
+      setSelectedSeats((selectedSeats) =>
+        selectedSeats.filter((s) => s.id !== seat.id)
+      );
+    }
+  }, []);
 
   return (
     <Form
@@ -130,10 +148,27 @@ export default function Book() {
     >
       <div className="flex flex-col gap-2 overflow-hidden p-2 md:p-4 lg:px-6">
         <h1 className="fluid-2xl">{showToHumanString(show)}</h1>
-        <SeatMap unavailableSeats={allUnavailableSeats} />
+        <SeatMap
+          unavailableSeats={allUnavailableSeats}
+          onSeatToggle={onSeatToggle}
+        />
       </div>
-      <section className="fixed inset-x-0 bottom-0 flex justify-center bg-base-200 p-4 lg:relative lg:-mr-6">
-        <button type="submit" className="btn-primary btn block">
+      <section className="fixed inset-x-0 bottom-0 flex flex-col gap-4 bg-base-200 p-4 lg:relative">
+        <ul className="flex w-full flex-col gap-2">
+          {selectedSeats.map((seat) => (
+            <li key={seat.id} className="flex justify-between">
+              <span>
+                {sectionTypeToTitle[seat.sectionType]} {seatToHumanString(seat)}
+              </span>
+              <span>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</span>
+            </li>
+          ))}
+        </ul>
+        <button
+          type="submit"
+          className="btn-primary btn block"
+          disabled={selectedSeats.length === 0}
+        >
           Ajouter au panier
         </button>
       </section>

@@ -3,13 +3,17 @@ import React, { useEffect, useMemo } from "react";
 
 import { SeatMapSection } from "~/components/seatMap/components/seatMapSection";
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
-import type { UnavailableSeat } from "~/models/seatMap";
+import type { Seat, UnavailableSeat } from "~/models/seatMap";
 
 interface SeatMapProps {
   unavailableSeats: UnavailableSeat[];
+  onSeatToggle: (seat: Seat, isSelected: boolean) => void;
 }
 
-export const SeatMap: React.FC<SeatMapProps> = ({ unavailableSeats }) => {
+export const SeatMap: React.FC<SeatMapProps> = ({
+  unavailableSeats,
+  onSeatToggle,
+}) => {
   const unavailableSeatsIdSet = useMemo(
     () => new Set(unavailableSeats.map((seat) => seat.seatId)),
     [unavailableSeats]
@@ -64,6 +68,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({ unavailableSeats }) => {
             key={section.type}
             section={section}
             unavailableSeatsIdSet={unavailableSeatsIdSet}
+            onSeatToggle={onSeatToggle}
           />
         ))}
 

@@ -2,17 +2,19 @@ import classNames from "classnames";
 import React from "react";
 
 import { SeatMapSeat } from "~/components/seatMap/components/seatMapSeat";
-import type { SeatSection } from "~/models/seatMap";
+import type { Seat, SeatSection } from "~/models/seatMap";
 import { isEmptySpace, sectionTypeToTitle } from "~/models/seatMap";
 
 interface Props {
   section: SeatSection;
   unavailableSeatsIdSet: Set<string>;
+  onSeatToggle: (seat: Seat, isSelected: boolean) => void;
 }
 
 export const SeatMapSection = React.memo(function SeatMapSection({
   section,
   unavailableSeatsIdSet,
+  onSeatToggle,
 }: Props) {
   return (
     <div key={section.type} className="flex flex-col items-center gap-2">
@@ -41,6 +43,7 @@ export const SeatMapSection = React.memo(function SeatMapSection({
                     key={index}
                     seat={seat}
                     unavailableSeatsIdSet={unavailableSeatsIdSet}
+                    onSeatToggle={onSeatToggle}
                   />
                 );
               }

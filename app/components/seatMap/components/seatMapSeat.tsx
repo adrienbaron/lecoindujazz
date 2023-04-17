@@ -6,11 +6,13 @@ import type { Seat } from "~/models/seatMap";
 interface Props {
   seat: Seat;
   unavailableSeatsIdSet: Set<string>;
+  onSeatToggle: (seat: Seat, isSelected: boolean) => void;
 }
 
 export const SeatMapSeat: React.FC<Props> = ({
   seat,
   unavailableSeatsIdSet,
+  onSeatToggle,
 }) => {
   const isBooked = unavailableSeatsIdSet.has(seat.id);
   const canBeBooked = !seat.isSecurity && !isBooked;
@@ -24,6 +26,7 @@ export const SeatMapSeat: React.FC<Props> = ({
         value={seat.id}
         disabled={seat.isSecurity || isBooked}
         className="peer absolute h-0 w-0 opacity-0"
+        onChange={(e) => onSeatToggle(seat, e.target.checked)}
       />
       <label
         htmlFor={seat.id}

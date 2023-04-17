@@ -12,6 +12,7 @@ import { lockedSeatsTable } from "~/models/dbSchema";
 import type { Seat, SeatSectionType } from "~/models/seatMap";
 import {
   getSeatByIdMap,
+  PRICE_PER_SEAT_IN_CENTS,
   seatToHumanString,
   sectionTypeToTitle,
 } from "~/models/seatMap";
@@ -21,8 +22,7 @@ import {
   getLockedSeatsForSession,
 } from "~/services/db.service.server";
 import { getSession } from "~/session";
-
-const PRICE_PER_SEAT_IN_CENTS = 1050;
+import { formatPrice } from "~/utils/price";
 
 export const action = async ({ context, request }: ActionArgs) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -117,7 +117,7 @@ export default function Basket() {
   );
 
   const totalPriceInCents =
-    (PRICE_PER_SEAT_IN_CENTS / 100) * lockedSeatsForSession.length;
+    PRICE_PER_SEAT_IN_CENTS * lockedSeatsForSession.length;
 
   return (
     <div className="mx-auto flex max-w-screen-sm flex-col gap-4 p-2 md:p-4 lg:px-6">
@@ -137,21 +137,15 @@ export default function Basket() {
               <ul className="flex flex-col gap-2">
                 {[...sections.entries()].map(([sectionType, seat]) => (
                   <li key={sectionType} className="flex flex-col gap-1">
-                    <h3 className="font-medium">
-                      {sectionTypeToTitle[sectionType]}
-                    </h3>
                     <ul>
                       {seat.map((seat) => (
                         <li key={sectionType} className="flex justify-between">
-                          <span>{seatToHumanString(seat)}</span>
+                          <span>
+                            {sectionTypeToTitle[sectionType]}{" "}
+                            {seatToHumanString(seat)}
+                          </span>
                           <strong>
-                            {(PRICE_PER_SEAT_IN_CENTS / 100).toLocaleString(
-                              "fr-FR",
-                              {
-                                style: "currency",
-                                currency: "EUR",
-                              }
-                            )}
+                            {formatPrice(PRICE_PER_SEAT_IN_CENTS)}
                           </strong>
                         </li>
                       ))}
@@ -168,12 +162,7 @@ export default function Basket() {
 
       <div className="flex justify-between">
         <span className="fluid-lg">Total</span>
-        <strong className="fluid-lg">
-          {totalPriceInCents.toLocaleString("fr-FR", {
-            style: "currency",
-            currency: "EUR",
-          })}
-        </strong>
+        <strong className="fluid-lg">{formatPrice(totalPriceInCents)}</strong>
       </div>
 
       {lockedSeatsForSession.length > 0 && (
