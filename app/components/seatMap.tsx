@@ -19,11 +19,6 @@ export const SeatMap: React.FC<SeatMapProps> = ({ unavailableSeats }) => {
       return;
     }
 
-    console.log({
-      width: floorPlanRef.current.clientWidth,
-      height: floorPlanRef.current.clientHeight,
-    });
-
     const panzoom = Panzoom(floorPlanRef.current, {
       contain: "inside",
       maxZoom: 2,
