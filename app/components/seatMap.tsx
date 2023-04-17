@@ -3,8 +3,8 @@ import classNames from "classnames";
 import React, { useEffect } from "react";
 
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
-import type { UnavailableSeat } from "~/utils/seatMap";
-import { isEmptySpace, sectionTypeToTitle } from "~/utils/seatMap";
+import type { UnavailableSeat } from "~/models/seatMap";
+import { isEmptySpace, sectionTypeToTitle } from "~/models/seatMap";
 
 interface SeatMapProps {
   unavailableSeats: UnavailableSeat[];

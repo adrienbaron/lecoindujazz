@@ -7,7 +7,7 @@ import {
   purchasedSeatsTable,
   purchaseTable,
 } from "~/models/dbSchema";
-import type { UnavailableSeat } from "~/utils/seatMap";
+import type { UnavailableSeat } from "~/models/seatMap";
 
 const contextWithDb = (
   context: Record<string, unknown>

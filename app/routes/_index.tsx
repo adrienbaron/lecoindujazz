@@ -1,6 +1,6 @@
 import { Link } from "@remix-run/react";
 
-import { shows } from "~/models/shows";
+import { shows, showToHumanString } from "~/models/shows";
 
 export default function Index() {
   return (
@@ -12,7 +12,7 @@ export default function Index() {
       </div>
       {shows.map((show) => (
         <Link key={show.id} to={`/book/${show.id}`} className="btn-primary btn">
-          {show.title} - {show.date.toLocaleDateString("fr-FR")}
+          {showToHumanString(show)}
         </Link>
       ))}
     </div>

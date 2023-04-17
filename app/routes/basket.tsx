@@ -9,13 +9,20 @@ import Stripe from "stripe";
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
 import type { LockedSeatModel } from "~/models/dbSchema";
 import { lockedSeatsTable } from "~/models/dbSchema";
-import { showByIdMap } from "~/models/shows";
+import type { Seat, SeatSectionType } from "~/models/seatMap";
+import {
+  getSeatByIdMap,
+  seatToHumanString,
+  sectionTypeToTitle,
+} from "~/models/seatMap";
+import { showByIdMap, showToHumanString } from "~/models/shows";
 import {
   getDbFromContext,
   getLockedSeatsForSession,
 } from "~/services/db.service.server";
 import { getSession } from "~/session";
-import { getSeatByIdMap, sectionTypeToTitle } from "~/utils/seatMap";
+
+const PRICE_PER_SEAT_IN_CENTS = 1050;
 
 export const action = async ({ context, request }: ActionArgs) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -52,11 +59,11 @@ export const action = async ({ context, request }: ActionArgs) => {
       return {
         quantity: 1,
         price_data: {
-          unit_amount: 1050,
+          unit_amount: PRICE_PER_SEAT_IN_CENTS,
           product_data: {
-            name: `${show.title}: ${sectionTypeToTitle[seat.sectionType]}: ${
-              seat.rowLetter
-            } - ${seat.num}${seat.isBis ? "bis" : ""}`,
+            name: `${showToHumanString(show)} | ${
+              sectionTypeToTitle[seat.sectionType]
+            }: ${seatToHumanString(seat)}`,
           },
           currency: "EUR",
         },
@@ -65,7 +72,7 @@ export const action = async ({ context, request }: ActionArgs) => {
     expires_at: Math.ceil(lockedUntil.getTime() / 1000),
     mode: "payment",
     success_url: `${url.protocol}//${url.host}?success=true`,
-    cancel_url: `${url.protocol}//${url.host}?canceled=true`,
+    cancel_url: `${url.protocol}//${url.host}/basket?canceled=true`,
   });
 
   if (!stripeSession.url) {
@@ -89,21 +96,34 @@ export default function Basket() {
     throw new Error("No data");
   }
 
-  const { lockedSeatsForSession } = data;
-  const seatLocksPerShowId = lockedSeatsForSession.reduce((acc, seat) => {
-    if (!acc[seat.showId]) {
-      acc[seat.showId] = [];
-    }
-    acc[seat.showId].push(seat);
-    return acc;
-  }, {} as Record<string, LockedSeatModel[]>);
-
   const seatById = useMemo(() => getSeatByIdMap(calaisTheatreAllSections), []);
+
+  const { lockedSeatsForSession } = data;
+  const seatsPerShowAndSection = lockedSeatsForSession.reduce(
+    (acc, seatLock) => {
+      const seat = seatById.get(seatLock.seatId);
+      if (!seat) {
+        throw new Error(`Seat not found for id ${seatLock.seatId}`);
+      }
+
+      const showSections =
+        acc.get(seatLock.showId) ?? new Map<SeatSectionType, Seat[]>();
+      const sectionSeats = showSections.get(seat.sectionType) ?? [];
+      showSections.set(seat.sectionType, [...sectionSeats, seat]);
+      acc.set(seatLock.showId, showSections);
+      return acc;
+    },
+    new Map<string, Map<SeatSectionType, Seat[]>>()
+  );
+
+  const totalPriceInCents =
+    (PRICE_PER_SEAT_IN_CENTS / 100) * lockedSeatsForSession.length;
+
   return (
     <div className="mx-auto flex max-w-screen-sm flex-col gap-4 p-2 md:p-4 lg:px-6">
       <h1 className="fluid-2xl">Panier</h1>
       <div className="flex flex-col gap-2">
-        {Object.entries(seatLocksPerShowId).map(([showId, seatLocks]) => {
+        {[...seatsPerShowAndSection.entries()].map(([showId, sections]) => {
           const show = showByIdMap.get(showId);
           if (!show) {
             throw new Error(`Show not found for id ${showId}`);
@@ -112,32 +132,52 @@ export default function Basket() {
           return (
             <div key={showId} className="flex flex-col gap-2">
               <h2 className="font-medium fluid-lg">
-                {show.title} - {show.date.toLocaleDateString("fr-FR")}
+                {showToHumanString(show)}
               </h2>
               <ul className="flex flex-col gap-2">
-                {seatLocks.map((seatLock) => {
-                  const seat = seatById.get(seatLock.seatId);
-                  if (!seat) {
-                    throw new Error(`Seat not found for id ${seatLock.seatId}`);
-                  }
-
-                  return (
-                    <li key={seatLock.seatId}>
-                      <span className="font-medium">
-                        {sectionTypeToTitle[seat.sectionType]}
-                      </span>
-                      : {seat.rowLetter} - {seat.num}
-                    </li>
-                  );
-                })}
+                {[...sections.entries()].map(([sectionType, seat]) => (
+                  <li key={sectionType} className="flex flex-col gap-1">
+                    <h3 className="font-medium">
+                      {sectionTypeToTitle[sectionType]}
+                    </h3>
+                    <ul>
+                      {seat.map((seat) => (
+                        <li key={sectionType} className="flex justify-between">
+                          <span>{seatToHumanString(seat)}</span>
+                          <strong>
+                            {(PRICE_PER_SEAT_IN_CENTS / 100).toLocaleString(
+                              "fr-FR",
+                              {
+                                style: "currency",
+                                currency: "EUR",
+                              }
+                            )}
+                          </strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
               </ul>
             </div>
           );
         })}
       </div>
 
+      <hr className="border-separate" />
+
+      <div className="flex justify-between">
+        <span className="fluid-lg">Total</span>
+        <strong className="fluid-lg">
+          {totalPriceInCents.toLocaleString("fr-FR", {
+            style: "currency",
+            currency: "EUR",
+          })}
+        </strong>
+      </div>
+
       {lockedSeatsForSession.length > 0 && (
-        <Form method="post">
+        <Form method="post" className="flex justify-end">
           <button type="submit" className="btn-primary btn">
             Valider le panier
           </button>

@@ -1,25 +1,32 @@
 interface Show {
   id: string;
   title: string;
-  date: Date;
+  datetime: Date;
 }
 
 export const shows: Show[] = [
   {
-    id: "MOCK_SHOW_ID",
-    title: "Demo show",
-    date: new Date("2021-09-01"),
+    id: "SHOW_ID_1",
+    title: "Enfants I AM 2",
+    datetime: new Date("2023-06-24T12:00:00.000Z"),
   },
   {
-    id: "MOCK_SHOW_ID_2",
-    title: "Demo show 2",
-    date: new Date("2021-09-01"),
+    id: "SHOW_ID_2",
+    title: "Enfants I AM 2",
+    datetime: new Date("2023-06-24T15:00:00.000Z"),
   },
   {
-    id: "MOCK_SHOW_ID_3",
-    title: "Demo show 3",
-    date: new Date("2021-09-01"),
+    id: "SHOW_ID_3",
+    title: "Adultes I AM 2",
+    datetime: new Date("2023-06-24T19:00:00.000Z"),
   },
 ];
 
 export const showByIdMap = new Map(shows.map((show) => [show.id, show]));
+
+export const showToHumanString = (show: Show): string =>
+  `${show.title} - ${show.datetime.toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    dateStyle: "medium",
+    timeStyle: "short",
+  })}`;

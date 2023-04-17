@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { SeatMap } from "~/components/seatMap";
 import { lockedSeatsTable } from "~/models/dbSchema";
-import { showByIdMap } from "~/models/shows";
+import { showByIdMap, showToHumanString } from "~/models/shows";
 import {
   getAllUnavailableSeatsForShow,
   getDbFromContext,
@@ -129,9 +129,7 @@ export default function Book() {
       method="post"
     >
       <div className="flex flex-col gap-2 overflow-hidden p-2 md:p-4 lg:px-6">
-        <h1 className="fluid-2xl">
-          {show.title} - {show.date.toLocaleDateString("fr-FR")}
-        </h1>
+        <h1 className="fluid-2xl">{showToHumanString(show)}</h1>
         <SeatMap unavailableSeats={allUnavailableSeats} />
       </div>
       <section className="fixed inset-x-0 bottom-0 flex justify-center bg-base-200 p-4 lg:relative lg:-mr-6">

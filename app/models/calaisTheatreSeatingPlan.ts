@@ -1,4 +1,4 @@
-import type { EmptySpace, RowLetter, SeatForRow } from "~/utils/seatMap";
+import type { EmptySpace, RowLetter, SeatForRow } from "~/models/seatMap";
 import {
   addBisAtEnd,
   addBisAtStart,
@@ -10,7 +10,7 @@ import {
   generateSeatSection,
   seatsDecreasing,
   seatsIncreasing,
-} from "~/utils/seatMap";
+} from "~/models/seatMap";
 
 export const thirdGallerySection = generateSeatSection("THIRD_GALLERY", [
   generateSeatRow("F", [

@@ -14,6 +14,17 @@ export type Seat = {
   sectionType: SeatSectionType;
 } & SeatAttributes;
 
+export const sectionTypeToTitle: Record<SeatSectionType, string> = {
+  ORCHESTRA: "Orchestre",
+  FIRST_GALLERY: "Première galerie",
+  SECOND_GALLERY: "Deuxième galerie",
+  THIRD_GALLERY: "Troisième galerie",
+};
+
+export const seatToHumanString = ({ num, rowLetter, isBis }: Seat) => {
+  return `${rowLetter}${num}${isBis ? " bis" : ""}`;
+};
+
 export interface UnavailableSeat {
   showId: string;
   seatId: string;
@@ -38,13 +49,6 @@ export type SeatSectionType =
   | "FIRST_GALLERY"
   | "SECOND_GALLERY"
   | "THIRD_GALLERY";
-
-export const sectionTypeToTitle: Record<SeatSectionType, string> = {
-  ORCHESTRA: "Orchestre",
-  FIRST_GALLERY: "Première galerie",
-  SECOND_GALLERY: "Deuxième galerie",
-  THIRD_GALLERY: "Troisième galerie",
-};
 
 export interface SeatSection {
   type: SeatSectionType;
@@ -85,7 +89,6 @@ export const generateEmptySpace = (
   }
   return emptySpaces;
 };
-
 export const generateCorridor = (): EmptySpace => ({
   isEmpty: true,
   type: "corridor",
@@ -97,10 +100,10 @@ export const generateRowLabel = (): EmptySpace => ({
 });
 
 export type SeatForRow = Omit<Seat, "id" | "rowLetter" | "sectionType">;
+
 type SeatRowForSection = Omit<SeatRow, "seats"> & {
   seats: (SeatForRow | EmptySpace)[];
 };
-
 export const generateSeatRow = (
   rowLetter: RowLetter,
   seats: (SeatForRow | EmptySpace)[]
@@ -115,7 +118,6 @@ export const addBisAtStart = (
 ): SeatForRow[] => {
   return [{ num: seats[0].num, ...seatAttributes, isBis: true }, ...seats];
 };
-
 export const addBisAtEnd = (
   seats: SeatForRow[],
   seatAttributes: SeatAttributes = {}
@@ -129,11 +131,10 @@ export const addBisAtEnd = (
     },
   ];
 };
-
 export const alternateNums = (numSeats: number): number[] => {
   const seatList: number[] = [];
-
   let currentSeatNum = numSeats % 2 === 0 ? numSeats : numSeats - 1;
+
   let delta = -2;
   for (let i = 0; i < numSeats; i++) {
     seatList.push(currentSeatNum);
@@ -143,30 +144,22 @@ export const alternateNums = (numSeats: number): number[] => {
       delta = 2;
     }
   }
-
   return seatList;
 };
-
 export const numsDecreasing = (numSeats: number, min: number): number[] => {
   const seatList: number[] = [];
-
   for (let i = numSeats; i >= min; i = i - 2) {
     seatList.push(i);
   }
-
   return seatList;
 };
-
 export const numsIncreasing = (numSeats: number, max: number): number[] => {
   const seatList: number[] = [];
-
   for (let i = numSeats; i <= max; i = i + 2) {
     seatList.push(i);
   }
-
   return seatList;
 };
-
 export const alternateSeats = (numSeats: number): SeatForRow[] =>
   alternateNums(numSeats).map((num) => ({ num }));
 
