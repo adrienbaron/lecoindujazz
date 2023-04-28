@@ -67,21 +67,28 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <header className="navbar bg-base-200">
-          <div className="flex-1">
-            <Link to={"/"}>
-              <img src="/images/logo.png" alt="" height="36" width="150" />
-            </Link>
-          </div>
-          <div className="flex-none">
-            <Link to={"/basket"} className="btn-ghost btn">
-              Panier ({lockedSeatsForSession.length})
-            </Link>
-          </div>
-        </header>
-        <main>
-          <Outlet />
-        </main>
+        <div className="min-h-screen">
+          <header className="navbar bg-base-200">
+            <div className="flex-1">
+              <Link to={"/"}>
+                <img src="/images/logo.png" alt="" height="36" width="150" />
+              </Link>
+            </div>
+            <div className="flex-none">
+              <Link to={"/basket"} className="btn-ghost btn">
+                Panier ({lockedSeatsForSession.length})
+              </Link>
+            </div>
+          </header>
+          <main>
+            <Outlet />
+          </main>
+        </div>
+        <footer className="footer flex justify-end bg-base-200 p-8">
+          <Link to="/admin" className="link">
+            Administrateur
+          </Link>
+        </footer>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
