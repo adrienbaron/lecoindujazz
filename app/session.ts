@@ -7,5 +7,8 @@ export const { getSession, commitSession } = createCookieSessionStorage({
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60,
     path: "/",
+
+    secrets: [],
+    secure: true,
   },
 });
