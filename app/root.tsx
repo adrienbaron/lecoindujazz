@@ -45,7 +45,11 @@ export const loader = async ({ context, request }: LoaderArgs) => {
   const lockedSeatsForSession = await getLockedSeatsForSession(db, sessionId);
 
   return typedjson(
-    { lockedSeatsForSession, isAdmin: session.get("isAdmin") },
+    {
+      lockedSeatsForSession,
+      isAdmin: session.get("isAdmin"),
+      isBookingOpen: context.IS_OPEN === "true",
+    },
     {
       headers: await getSetCookieHeader(session),
     }

@@ -25,6 +25,10 @@ import { getSession } from "~/session";
 import { formatPrice } from "~/utils/price";
 
 export const action = async ({ context, request }: ActionArgs) => {
+  if (!context.IS_OPEN) {
+    throw new Error("Booking is closed");
+  }
+
   const session = await getSession(request.headers.get("Cookie"));
   if (!session.get("sessionId")) {
     return redirect("/");
