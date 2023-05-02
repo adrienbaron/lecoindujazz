@@ -66,16 +66,28 @@ export default function App() {
       </head>
       <body>
         <div className="min-h-screen">
-          <header className="navbar bg-base-200">
+          <header
+            className={classNames(
+              "navbar transition-colors",
+              isAdmin ? "bg-red-950" : "bg-base-200"
+            )}
+          >
             <div className="flex-1">
               <Link to={"/"}>
                 <img src="/images/logo.png" alt="" height="36" width="150" />
               </Link>
             </div>
             <div className="flex-none">
-              <Link to={"/basket"} className="btn-ghost btn">
-                Panier ({lockedSeatsForSession.length})
-              </Link>
+              {!isAdmin && (
+                <Link to={"/basket"} className="btn-ghost btn">
+                  Panier ({lockedSeatsForSession.length})
+                </Link>
+              )}
+              {isAdmin && (
+                <Link to={"/admin"} className="badge-error badge">
+                  Administrateur
+                </Link>
+              )}
             </div>
           </header>
           <main>
