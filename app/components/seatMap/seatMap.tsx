@@ -8,11 +8,13 @@ import type { Seat, UnavailableSeat } from "~/models/seatMap";
 interface SeatMapProps {
   unavailableSeats: UnavailableSeat[];
   onSeatToggle: (seat: Seat, isSelected: boolean) => void;
+  allowSelectUnavailableSeats?: boolean;
 }
 
 export const SeatMap: React.FC<SeatMapProps> = ({
   unavailableSeats,
   onSeatToggle,
+  allowSelectUnavailableSeats,
 }) => {
   const unavailableSeatsIdSet = useMemo(
     () => new Set(unavailableSeats.map((seat) => seat.seatId)),
@@ -69,6 +71,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
             section={section}
             unavailableSeatsIdSet={unavailableSeatsIdSet}
             onSeatToggle={onSeatToggle}
+            allowSelectUnavailableSeats={allowSelectUnavailableSeats}
           />
         ))}
 

@@ -9,12 +9,14 @@ interface Props {
   section: SeatSection;
   unavailableSeatsIdSet: Set<string>;
   onSeatToggle: (seat: Seat, isSelected: boolean) => void;
+  allowSelectUnavailableSeats?: boolean;
 }
 
 export const SeatMapSection = React.memo(function SeatMapSection({
   section,
   unavailableSeatsIdSet,
   onSeatToggle,
+  allowSelectUnavailableSeats,
 }: Props) {
   return (
     <div key={section.type} className="flex flex-col items-center gap-2">
@@ -43,6 +45,7 @@ export const SeatMapSection = React.memo(function SeatMapSection({
                     key={index}
                     seat={seat}
                     unavailableSeatsIdSet={unavailableSeatsIdSet}
+                    allowSelectUnavailableSeats={allowSelectUnavailableSeats}
                     onSeatToggle={onSeatToggle}
                   />
                 );

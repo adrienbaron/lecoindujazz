@@ -1,6 +1,11 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
-import { Form, useLoaderData, useParams } from "@remix-run/react";
+import {
+  Form,
+  useLoaderData,
+  useParams,
+  useRouteLoaderData,
+} from "@remix-run/react";
 import { and, eq, inArray } from "drizzle-orm";
 import React, { useCallback } from "react";
 import { redirect } from "remix-typedjson";
@@ -118,6 +123,7 @@ export const action = async ({
 
 export default function Book() {
   const { allUnavailableSeats } = useLoaderData<typeof loader>();
+  const { isAdmin } = useRouteLoaderData("root") as { isAdmin: boolean };
   const [selectedSeats, setSelectedSeats] = React.useState<Seat[]>([]);
 
   const { showId } = useParams<{ showId: string }>();
@@ -139,6 +145,8 @@ export default function Book() {
     }
   }, []);
 
+  const unavailableSeatsSet = new Set(allUnavailableSeats.map((s) => s.seatId));
+
   return (
     <Form
       className="grid w-full grid-rows-[80vh_0] lg:grid-cols-[auto_300px] lg:grid-rows-none"
@@ -149,6 +157,7 @@ export default function Book() {
         <SeatMap
           unavailableSeats={allUnavailableSeats}
           onSeatToggle={onSeatToggle}
+          allowSelectUnavailableSeats={isAdmin}
         />
       </div>
       <section className="fixed inset-x-0 bottom-0 flex flex-col gap-4 bg-base-200 p-4 lg:relative">
@@ -158,7 +167,13 @@ export default function Book() {
               <span>
                 {sectionTypeToTitle[seat.sectionType]} {seatToHumanString(seat)}
               </span>
-              <span>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</span>
+              {!isAdmin && <span>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</span>}
+              {isAdmin &&
+                (unavailableSeatsSet.has(seat.id) ? (
+                  <span className="text-success">Débloquer</span>
+                ) : (
+                  <span className="text-error">Bloquer</span>
+                ))}
             </li>
           ))}
         </ul>
@@ -167,7 +182,7 @@ export default function Book() {
           className="btn-primary btn block"
           disabled={selectedSeats.length === 0}
         >
-          Ajouter au panier
+          {isAdmin ? "Valider" : "Ajouter au panier"}
         </button>
       </section>
     </Form>

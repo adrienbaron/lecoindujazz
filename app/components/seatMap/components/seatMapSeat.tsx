@@ -7,15 +7,19 @@ interface Props {
   seat: Seat;
   unavailableSeatsIdSet: Set<string>;
   onSeatToggle: (seat: Seat, isSelected: boolean) => void;
+  allowSelectUnavailableSeats?: boolean;
 }
 
 export const SeatMapSeat: React.FC<Props> = ({
   seat,
   unavailableSeatsIdSet,
+  allowSelectUnavailableSeats,
   onSeatToggle,
 }) => {
-  const isBooked = unavailableSeatsIdSet.has(seat.id);
-  const canBeBooked = !seat.isSecurity && !isBooked;
+  const isUnavailable = unavailableSeatsIdSet.has(seat.id);
+  const canBeBooked = !seat.isSecurity && !isUnavailable;
+  const canBeSelected =
+    !seat.isSecurity && (!isUnavailable || allowSelectUnavailableSeats);
 
   return (
     <div>
@@ -24,7 +28,7 @@ export const SeatMapSeat: React.FC<Props> = ({
         name="seat"
         id={seat.id}
         value={seat.id}
-        disabled={seat.isSecurity || isBooked}
+        disabled={!canBeSelected}
         className="peer absolute h-0 w-0 opacity-0"
         onChange={(e) => onSeatToggle(seat, e.target.checked)}
       />
@@ -34,7 +38,8 @@ export const SeatMapSeat: React.FC<Props> = ({
           "flex h-8 w-8 shrink-0 flex-col items-center justify-center text-sm",
           "peer-checked:border-4 peer-checked:border-green-400 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-focus",
           canBeBooked && "bg-green-700",
-          !canBeBooked && "bg-red-500 opacity-30",
+          !canBeBooked && "bg-red-500",
+          !canBeSelected && "opacity-30",
           seat.hasRestrictedView && "border-4 border-orange-300",
           seat.isWheelchairAccessible && "border-4 border-blue-300"
         )}
