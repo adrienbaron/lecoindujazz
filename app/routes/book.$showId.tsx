@@ -19,7 +19,7 @@ import {
   getAllUnavailableSeatsForShow,
   getDbFromContext,
 } from "~/services/db.service.server";
-import { commitSession, getSession } from "~/session";
+import { getSession, getSetCookieHeader } from "~/session";
 import { formatPrice } from "~/utils/price";
 
 export const loader = async ({
@@ -42,11 +42,7 @@ export const loader = async ({
   return json(
     { allUnavailableSeats },
     {
-      headers: {
-        "Set-Cookie": await commitSession(session, {
-          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        }),
-      },
+      headers: await getSetCookieHeader(session),
     }
   );
 };

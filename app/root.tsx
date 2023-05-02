@@ -20,7 +20,7 @@ import {
   getDbFromContext,
   getLockedSeatsForSession,
 } from "~/services/db.service.server";
-import { commitSession, getSession } from "~/session";
+import { getSession, getSetCookieHeader } from "~/session";
 
 import styles from "./tailwind.css";
 
@@ -46,11 +46,7 @@ export const loader = async ({ context, request }: LoaderArgs) => {
   return typedjson(
     { lockedSeatsForSession },
     {
-      headers: {
-        "Set-Cookie": await commitSession(session, {
-          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        }),
-      },
+      headers: await getSetCookieHeader(session),
     }
   );
 };

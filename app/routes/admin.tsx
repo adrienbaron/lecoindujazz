@@ -1,21 +1,16 @@
 import type { ActionArgs, LoaderArgs } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
 import { Form, useLoaderData } from "@remix-run/react";
+import { redirect } from "@remix-run/router";
 
-import { commitSession, getSession } from "~/session";
+import { getSession, getSetCookieHeader } from "~/session";
 
-export const loader = async ({ context, request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderArgs) => {
   const session = await getSession(request.headers.get("Cookie"));
 
   return json(
     { isAdmin: session.get("isAdmin") },
-    {
-      headers: {
-        "Set-Cookie": await commitSession(session, {
-          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        }),
-      },
-    }
+    { headers: await getSetCookieHeader(session) }
   );
 };
 
@@ -23,6 +18,12 @@ export const action = async ({ request, context }: ActionArgs) => {
   const session = await getSession(request.headers.get("Cookie"));
 
   const formData = await request.formData();
+  const action = formData.get("action");
+  if (action === "logout") {
+    session.set("isAdmin", false);
+    return redirect("/", { headers: await getSetCookieHeader(session) });
+  }
+
   const password = formData.get("password");
   if (!password) {
     return json({ error: "Mot de passe invalide" }, { status: 400 });
@@ -32,16 +33,9 @@ export const action = async ({ request, context }: ActionArgs) => {
   }
 
   session.set("isAdmin", true);
-  return json(
-    { isAdmin: true },
-    {
-      headers: {
-        "Set-Cookie": await commitSession(session, {
-          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        }),
-      },
-    }
-  );
+  return redirect("/", {
+    headers: await getSetCookieHeader(session),
+  });
 };
 
 export default function Admin() {
@@ -65,11 +59,28 @@ export default function Admin() {
               className="input"
             />
             <div className="card-actions flex justify-end">
-              <button className="btn-primary btn">Se connecter</button>
+              <button className="btn-primary btn" name="action" value="login">
+                Se connecter
+              </button>
             </div>
           </div>
         </Form>
       </section>
     );
   }
+
+  return (
+    <section className="flex justify-center p-4">
+      <Form method="post" className="card w-full max-w-lg rounded bg-base-200">
+        <div className="card-body">
+          <p>Vous êtes connecté en tant qu&rsquo;administrateur</p>
+          <div className="card-actions flex justify-end">
+            <button className="btn-primary btn" name="action" value="logout">
+              Se deconnecter
+            </button>
+          </div>
+        </div>
+      </Form>
+    </section>
+  );
 }
