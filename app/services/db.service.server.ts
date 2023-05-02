@@ -98,32 +98,30 @@ export async function registerPurchase(
     throw new Error("No seats found for checkout session");
   }
 
-  await db.transaction(async (tx) => {
-    await tx
-      .insert(purchaseTable)
-      .values({
-        id: stripeCheckoutSessionId,
-        name: customerDetails.name,
-        email: customerDetails.email,
-      })
-      .run();
+  await db
+    .insert(purchaseTable)
+    .values({
+      id: stripeCheckoutSessionId,
+      name: customerDetails.name,
+      email: customerDetails.email,
+    })
+    .run();
 
-    await tx
-      .insert(purchasedSeatsTable)
-      .values(
-        seats.map(({ showId, seatId }) => ({
-          showId,
-          seatId,
-          purchaseId: stripeCheckoutSessionId,
-        }))
-      )
-      .run();
+  await db
+    .insert(purchasedSeatsTable)
+    .values(
+      seats.map(({ showId, seatId }) => ({
+        showId,
+        seatId,
+        purchaseId: stripeCheckoutSessionId,
+      }))
+    )
+    .run();
 
-    await tx
-      .delete(lockedSeatsTable)
-      .where(
-        eq(lockedSeatsTable.stripeCheckoutSessionId, stripeCheckoutSessionId)
-      )
-      .run();
-  });
+  await db
+    .delete(lockedSeatsTable)
+    .where(
+      eq(lockedSeatsTable.stripeCheckoutSessionId, stripeCheckoutSessionId)
+    )
+    .run();
 }
