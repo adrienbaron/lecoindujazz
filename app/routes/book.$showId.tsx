@@ -19,7 +19,7 @@ import {
   getAllUnavailableSeatsForShow,
   getDbFromContext,
 } from "~/services/db.service.server";
-import { getSession, getSetCookieHeader } from "~/session";
+import { getSessionStorage, getSetCookieHeader } from "~/session";
 import { formatPrice } from "~/utils/price";
 
 export const loader = async ({
@@ -31,6 +31,7 @@ export const loader = async ({
     throw json({ error: "Missing showId" }, { status: 400 });
   }
 
+  const { getSession } = getSessionStorage(context);
   const session = await getSession(request.headers.get("Cookie"));
   if (!session.get("sessionId")) {
     session.set("sessionId", uuidv4());
@@ -42,7 +43,7 @@ export const loader = async ({
   return json(
     { allUnavailableSeats },
     {
-      headers: await getSetCookieHeader(session),
+      headers: await getSetCookieHeader(context, session),
     }
   );
 };
@@ -56,6 +57,7 @@ export const action = async ({
     throw json({ error: "Missing showId" }, { status: 400 });
   }
 
+  const { getSession } = getSessionStorage(context);
   const session = await getSession(request.headers.get("Cookie"));
   const sessionId = session.get("sessionId");
 

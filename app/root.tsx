@@ -21,7 +21,7 @@ import {
   getDbFromContext,
   getLockedSeatsForSession,
 } from "~/services/db.service.server";
-import { getSession, getSetCookieHeader } from "~/session";
+import { getSessionStorage, getSetCookieHeader } from "~/session";
 
 import styles from "./tailwind.css";
 
@@ -35,6 +35,8 @@ export const meta: MetaFunction = () => ({
 });
 
 export const loader = async ({ context, request }: LoaderArgs) => {
+  const { getSession } = getSessionStorage(context);
+
   const session = await getSession(request.headers.get("Cookie"));
   if (!session.get("sessionId")) {
     session.set("sessionId", uuidv4());
@@ -51,7 +53,7 @@ export const loader = async ({ context, request }: LoaderArgs) => {
       isBookingOpen: context.IS_OPEN === "true",
     },
     {
-      headers: await getSetCookieHeader(session),
+      headers: await getSetCookieHeader(context, session),
     }
   );
 };

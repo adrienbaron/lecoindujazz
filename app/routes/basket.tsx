@@ -21,7 +21,7 @@ import {
   getDbFromContext,
   getLockedSeatsForSession,
 } from "~/services/db.service.server";
-import { getSession } from "~/session";
+import { getSessionStorage } from "~/session";
 import { formatPrice } from "~/utils/price";
 
 export const action = async ({ context, request }: ActionArgs) => {
@@ -29,6 +29,7 @@ export const action = async ({ context, request }: ActionArgs) => {
     throw new Error("Booking is closed");
   }
 
+  const { getSession } = getSessionStorage(context);
   const session = await getSession(request.headers.get("Cookie"));
   if (!session.get("sessionId")) {
     return redirect("/");

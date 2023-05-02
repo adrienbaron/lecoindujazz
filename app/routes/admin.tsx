@@ -3,16 +3,19 @@ import { json } from "@remix-run/cloudflare";
 import { Form, useRouteLoaderData } from "@remix-run/react";
 import { redirect } from "@remix-run/router";
 
-import { getSession, getSetCookieHeader } from "~/session";
+import { getSessionStorage, getSetCookieHeader } from "~/session";
 
 export const action = async ({ request, context }: ActionArgs) => {
+  const { getSession } = getSessionStorage(context);
   const session = await getSession(request.headers.get("Cookie"));
 
   const formData = await request.formData();
   const action = formData.get("action");
   if (action === "logout") {
     session.set("isAdmin", false);
-    return redirect("/", { headers: await getSetCookieHeader(session) });
+    return redirect("/", {
+      headers: await getSetCookieHeader(context, session),
+    });
   }
 
   const password = formData.get("password");
@@ -25,7 +28,7 @@ export const action = async ({ request, context }: ActionArgs) => {
 
   session.set("isAdmin", true);
   return redirect("/", {
-    headers: await getSetCookieHeader(session),
+    headers: await getSetCookieHeader(context, session),
   });
 };
 
