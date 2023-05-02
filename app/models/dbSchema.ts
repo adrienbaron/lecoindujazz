@@ -29,7 +29,7 @@ export const purchasedSeatsTable = sqliteTable(
 );
 
 export const lockedSeatsTable = sqliteTable(
-  "lockedSeats",
+  "locked_seats",
   {
     showId: text("show_id").notNull(),
     seatId: text("seat_id").notNull(),
