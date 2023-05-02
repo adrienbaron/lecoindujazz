@@ -16,7 +16,7 @@ const envSchema = z.object({
 export const action: ActionFunction = async ({ context, request }) => {
   const parsedEnv = envSchema.safeParse(context);
   if (!parsedEnv.success) {
-    return json({ error: parsedEnv.error }, { status: 500 });
+    return json({ error: parsedEnv.error, reason: "NO_ENV" }, { status: 500 });
   }
   const env = parsedEnv.data;
 
@@ -37,7 +37,7 @@ export const action: ActionFunction = async ({ context, request }) => {
     );
   } catch (err) {
     console.error(err);
-    return json({ error: err }, { status: 400 });
+    return json({ error: err, reason: "STRIPE_ERROR" }, { status: 400 });
   }
 
   if (event.type === "checkout.session.completed") {
@@ -55,7 +55,7 @@ export const action: ActionFunction = async ({ context, request }) => {
       });
     } catch (err) {
       console.error(err);
-      return json({ error: err }, { status: 500 });
+      return json({ error: err, reason: "DB_ERROR" }, { status: 500 });
     }
   }
 
