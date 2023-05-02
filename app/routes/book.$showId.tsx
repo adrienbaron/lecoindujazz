@@ -140,7 +140,7 @@ export default function Book() {
   return (
     <Form
       className="grid w-full grid-rows-[80vh_0] lg:grid-cols-[auto_300px] lg:grid-rows-none"
-      method="post"
+      method="POST"
     >
       <div className="flex flex-col gap-2 overflow-hidden p-2 md:p-4 lg:px-6">
         <h1 className="fluid-2xl">{showToHumanString(show)}</h1>

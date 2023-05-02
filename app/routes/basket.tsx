@@ -166,7 +166,7 @@ export default function Basket() {
       </div>
 
       {lockedSeatsForSession.length > 0 && (
-        <Form method="post" className="flex justify-end">
+        <Form method="POST" className="flex justify-end">
           <button type="submit" className="btn-primary btn">
             Valider le panier
           </button>

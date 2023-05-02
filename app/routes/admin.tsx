@@ -1,18 +1,9 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/cloudflare";
+import type { ActionArgs } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useRouteLoaderData } from "@remix-run/react";
 import { redirect } from "@remix-run/router";
 
 import { getSession, getSetCookieHeader } from "~/session";
-
-export const loader = async ({ request }: LoaderArgs) => {
-  const session = await getSession(request.headers.get("Cookie"));
-
-  return json(
-    { isAdmin: session.get("isAdmin") },
-    { headers: await getSetCookieHeader(session) }
-  );
-};
 
 export const action = async ({ request, context }: ActionArgs) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -39,13 +30,13 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 export default function Admin() {
-  const { isAdmin } = useLoaderData<typeof loader>();
+  const { isAdmin } = useRouteLoaderData("root") as { isAdmin: boolean };
 
   if (!isAdmin) {
     return (
       <section className="flex justify-center p-4">
         <Form
-          method="post"
+          method="POST"
           className="card w-full max-w-lg rounded bg-base-200"
         >
           <div className="card-body">
@@ -71,7 +62,7 @@ export default function Admin() {
 
   return (
     <section className="flex justify-center p-4">
-      <Form method="post" className="card w-full max-w-lg rounded bg-base-200">
+      <Form method="POST" className="card w-full max-w-lg rounded bg-base-200">
         <div className="card-body">
           <p>Vous êtes connecté en tant qu&rsquo;administrateur</p>
           <div className="card-actions flex justify-end">

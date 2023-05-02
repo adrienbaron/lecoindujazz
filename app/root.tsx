@@ -12,6 +12,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import classNames from "classnames";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
@@ -44,7 +45,7 @@ export const loader = async ({ context, request }: LoaderArgs) => {
   const lockedSeatsForSession = await getLockedSeatsForSession(db, sessionId);
 
   return typedjson(
-    { lockedSeatsForSession },
+    { lockedSeatsForSession, isAdmin: session.get("isAdmin") },
     {
       headers: await getSetCookieHeader(session),
     }
@@ -52,8 +53,9 @@ export const loader = async ({ context, request }: LoaderArgs) => {
 };
 
 export default function App() {
-  const { lockedSeatsForSession } = useTypedLoaderData<{
+  const { lockedSeatsForSession, isAdmin } = useTypedLoaderData<{
     lockedSeatsForSession: LockedSeatModel[];
+    isAdmin: boolean;
   }>();
 
   return (
