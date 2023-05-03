@@ -10,10 +10,11 @@ import { WarningIcon } from "~/components/icons";
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
 import type { LockedSeatModel } from "~/models/dbSchema";
 import { lockedSeatsTable } from "~/models/dbSchema";
-import type { Seat, SeatSectionType } from "~/models/seatMap";
+import type { Seat } from "~/models/seatMap";
 import {
   getSeatByIdMap,
   PRICE_PER_SEAT_IN_CENTS,
+  seatSectionsOrder,
   seatToHumanString,
   sectionTypeToTitle,
 } from "~/models/seatMap";
@@ -119,22 +120,30 @@ export default function Basket() {
   const seatById = useMemo(() => getSeatByIdMap(calaisTheatreAllSections), []);
 
   const { lockedSeatsForSession } = data;
-  const seatsPerShowAndSection = lockedSeatsForSession.reduce(
-    (acc, seatLock) => {
-      const seat = seatById.get(seatLock.seatId);
-      if (!seat) {
-        throw new Error(`Seat not found for id ${seatLock.seatId}`);
+  const seatsPerShow = lockedSeatsForSession.reduce((acc, seatLock) => {
+    const seat = seatById.get(seatLock.seatId);
+    if (!seat) {
+      throw new Error(`Seat not found for id ${seatLock.seatId}`);
+    }
+
+    const showSections = acc.get(seatLock.showId) ?? [];
+    showSections.push(seat);
+    acc.set(seatLock.showId, showSections);
+    return acc;
+  }, new Map<string, Seat[]>());
+
+  [...seatsPerShow.values()].forEach((seats) => {
+    seats.sort((a, b) => {
+      const sectionOrder =
+        seatSectionsOrder.indexOf(a.sectionType) -
+        seatSectionsOrder.indexOf(b.sectionType);
+      if (sectionOrder !== 0) {
+        return sectionOrder;
       }
 
-      const showSections =
-        acc.get(seatLock.showId) ?? new Map<SeatSectionType, Seat[]>();
-      const sectionSeats = showSections.get(seat.sectionType) ?? [];
-      showSections.set(seat.sectionType, [...sectionSeats, seat]);
-      acc.set(seatLock.showId, showSections);
-      return acc;
-    },
-    new Map<string, Map<SeatSectionType, Seat[]>>()
-  );
+      return a.id.localeCompare(b.id);
+    });
+  });
 
   const totalPriceInCents =
     PRICE_PER_SEAT_IN_CENTS * lockedSeatsForSession.length;
@@ -162,7 +171,7 @@ export default function Basket() {
     <div className="mx-auto flex max-w-screen-sm flex-col gap-4 p-2 md:p-4 lg:px-6">
       <h1 className="fluid-2xl">Panier</h1>
       <div className="flex flex-col gap-2">
-        {[...seatsPerShowAndSection.entries()].map(([showId, sections]) => {
+        {[...seatsPerShow.entries()].map(([showId, showSeats]) => {
           const show = showByIdMap.get(showId);
           if (!show) {
             throw new Error(`Show not found for id ${showId}`);
@@ -173,22 +182,14 @@ export default function Basket() {
               <h2 className="font-medium fluid-lg">
                 {showToHumanString(show)}
               </h2>
-              <ul className="flex flex-col gap-2">
-                {[...sections.entries()].map(([sectionType, seat]) => (
-                  <li key={sectionType} className="flex flex-col gap-1">
-                    <ul>
-                      {seat.map((seat) => (
-                        <li key={sectionType} className="flex justify-between">
-                          <span>
-                            {sectionTypeToTitle[sectionType]}{" "}
-                            {seatToHumanString(seat)}
-                          </span>
-                          <strong>
-                            {formatPrice(PRICE_PER_SEAT_IN_CENTS)}
-                          </strong>
-                        </li>
-                      ))}
-                    </ul>
+              <ul>
+                {showSeats.map((seat) => (
+                  <li key={seat.id} className="flex justify-between">
+                    <span>
+                      {sectionTypeToTitle[seat.sectionType]}{" "}
+                      {seatToHumanString(seat)}
+                    </span>
+                    <strong>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</strong>
                   </li>
                 ))}
               </ul>

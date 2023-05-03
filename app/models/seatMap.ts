@@ -60,6 +60,13 @@ export type SeatSectionType =
   | "SECOND_GALLERY"
   | "THIRD_GALLERY";
 
+export const seatSectionsOrder = [
+  "ORCHESTRA",
+  "FIRST_GALLERY",
+  "SECOND_GALLERY",
+  "THIRD_GALLERY",
+] as const;
+
 export interface SeatSection {
   type: SeatSectionType;
   rows: SeatRow[];
