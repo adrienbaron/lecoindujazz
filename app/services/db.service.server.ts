@@ -3,7 +3,7 @@ import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { drizzle } from "drizzle-orm/d1";
 import { v4 as uuidv4 } from "uuid";
 
-import type { LockedSeatModel } from "~/models/dbSchema";
+import type { LockedSeatModel, PurchasedSeatModel } from "~/models/dbSchema";
 import {
   lockedSeatsTable,
   purchasedSeatsTable,
@@ -30,17 +30,15 @@ export const getDbFromContext = (
 export const getPurchasedSeatsIdForShow = async (
   db: DrizzleD1Database,
   showId: string
-): Promise<string[]> => {
-  const purchasedSeats = await db
+): Promise<Pick<PurchasedSeatModel, "purchaseId" | "seatId">[]> =>
+  await db
     .select({
+      purchaseId: purchasedSeatsTable.purchaseId,
       seatId: purchasedSeatsTable.seatId,
     })
     .from(purchasedSeatsTable)
     .where(eq(purchasedSeatsTable.showId, showId))
     .all();
-
-  return purchasedSeats.map((seat) => seat.seatId);
-};
 
 export const getLockedSeatsForShow = async (
   db: DrizzleD1Database,
@@ -77,7 +75,7 @@ export const getAllUnavailableSeatsForShow = async (
       seatId: seat.seatId,
       reason: "locked" as const,
     })),
-    ...purchasedSeats.map((seatId) => ({
+    ...purchasedSeats.map(({ seatId }) => ({
       showId,
       seatId: seatId,
       reason: "purchased" as const,
@@ -157,18 +155,20 @@ export const adminLockAndUnlockSeats = async (
   ]);
 
   const lockedSeatsIdSet = new Set(lockedSeats.map((seat) => seat.seatId));
-  const purchasedSeatsIdSet = new Set(purchasedSeats);
+  const purchasedSeatsMap = new Map(
+    purchasedSeats.map((seat) => [seat.seatId, seat])
+  );
 
   const lockedSeatsToUnlock = selectedSeatsId.filter((selectedSeatId) =>
     lockedSeatsIdSet.has(selectedSeatId)
   );
   const purchasedSeatsToUnlock = selectedSeatsId.filter((selectedSeatId) =>
-    purchasedSeatsIdSet.has(selectedSeatId)
+    purchasedSeatsMap.has(selectedSeatId)
   );
   const seatsToMarkAsPurchased = selectedSeatsId.filter(
     (selectedSeatId) =>
       !lockedSeatsIdSet.has(selectedSeatId) &&
-      !purchasedSeatsIdSet.has(selectedSeatId)
+      !purchasedSeatsMap.has(selectedSeatId)
   );
 
   const adminPurchaseId = `ADMIN:${uuidv4()}`;
@@ -201,6 +201,18 @@ export const adminLockAndUnlockSeats = async (
           and(
             eq(purchasedSeatsTable.showId, showId),
             inArray(purchasedSeatsTable.seatId, purchasedSeatsToUnlock)
+          )
+        )
+        .run(),
+    purchasedSeatsToUnlock.length > 0 &&
+      db
+        .delete(purchaseTable)
+        .where(
+          inArray(
+            purchaseTable.id,
+            purchasedSeatsToUnlock.map(
+              (seatId) => purchasedSeatsMap.get(seatId)?.purchaseId as string
+            )
           )
         )
         .run(),
