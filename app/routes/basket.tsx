@@ -1,8 +1,8 @@
 import type { ActionArgs } from "@remix-run/cloudflare";
-import { Form, Link } from "@remix-run/react";
+import { Form, Link, useRevalidator } from "@remix-run/react";
 import { redirect } from "@remix-run/router";
 import { eq } from "drizzle-orm";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTypedRouteLoaderData } from "remix-typedjson";
 import Stripe from "stripe";
 
@@ -93,6 +93,17 @@ export const action = async ({ context, request }: ActionArgs) => {
   return redirect(stripeSession.url);
 };
 
+function sessionToExpireInSeconds(lockedSeatsForSession: LockedSeatModel[]) {
+  if (!lockedSeatsForSession.length) {
+    return 0;
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(lockedSeatsForSession[0].lockedUntil);
+  const diff = expiresAt.getTime() - now.getTime();
+  return Math.max(Math.ceil(diff / 1000), 0);
+}
+
 export default function Basket() {
   const data = useTypedRouteLoaderData<{
     lockedSeatsForSession: LockedSeatModel[];
@@ -100,6 +111,8 @@ export default function Basket() {
   if (!data) {
     throw new Error("No data");
   }
+
+  const revalidator = useRevalidator();
 
   const seatById = useMemo(() => getSeatByIdMap(calaisTheatreAllSections), []);
 
@@ -123,6 +136,25 @@ export default function Basket() {
 
   const totalPriceInCents =
     PRICE_PER_SEAT_IN_CENTS * lockedSeatsForSession.length;
+
+  const [expiresInSeconds, setExpiresInSeconds] = useState(() => {
+    return sessionToExpireInSeconds(lockedSeatsForSession);
+  });
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const timeLeftInSeconds = sessionToExpireInSeconds(lockedSeatsForSession);
+      setExpiresInSeconds(timeLeftInSeconds);
+
+      if (timeLeftInSeconds <= 0) {
+        revalidator.revalidate();
+        clearInterval(interval);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockedSeatsForSession, revalidator]);
+
+  const expiresMinutes = Math.floor(expiresInSeconds / 60);
+  const expiresSeconds = expiresInSeconds % 60;
 
   return (
     <div className="mx-auto flex max-w-screen-sm flex-col gap-4 p-2 md:p-4 lg:px-6">
@@ -163,19 +195,45 @@ export default function Basket() {
         })}
       </div>
 
-      <hr className="border-separate" />
-
-      <div className="flex justify-between">
-        <span className="fluid-lg">Total</span>
-        <strong className="fluid-lg">{formatPrice(totalPriceInCents)}</strong>
-      </div>
-
       {lockedSeatsForSession.length > 0 && (
-        <Form method="POST" className="flex justify-end">
-          <button type="submit" className="btn-primary btn">
-            Valider le panier
-          </button>
-        </Form>
+        <>
+          <hr className="border-separate" />
+
+          <div className="flex justify-between">
+            <span className="fluid-lg">Total</span>
+            <strong className="fluid-lg">
+              {formatPrice(totalPriceInCents)}
+            </strong>
+          </div>
+          <div className="alert alert-info">
+            <div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 shrink-0 stroke-current"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              <span>
+                Votre panier expire dans{" "}
+                <strong>
+                  {expiresMinutes} minutes et {expiresSeconds} secondes
+                </strong>
+              </span>
+            </div>
+          </div>
+          <Form method="POST" className="flex justify-end">
+            <button type="submit" className="btn-primary btn">
+              Valider le panier
+            </button>
+          </Form>
+        </>
       )}
       {lockedSeatsForSession.length === 0 && (
         <div className="flex flex-col gap-4 text-center">
