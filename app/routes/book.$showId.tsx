@@ -3,9 +3,11 @@ import { json } from "@remix-run/cloudflare";
 import {
   Form,
   useLoaderData,
+  useNavigation,
   useParams,
   useRouteLoaderData,
 } from "@remix-run/react";
+import classNames from "classnames";
 import { and, eq, inArray } from "drizzle-orm";
 import React, { useCallback } from "react";
 import { redirect } from "remix-typedjson";
@@ -159,6 +161,7 @@ export default function Book() {
     allUnavailableSeats.map((seat) => [seat.seatId, seat])
   );
 
+  const navigation = useNavigation();
   return (
     <Form
       className="grid w-full grid-rows-[80vh_0] lg:grid-cols-[auto_300px] lg:grid-rows-none"
@@ -229,8 +232,13 @@ export default function Book() {
         )}
         <button
           type="submit"
-          className="btn-primary btn block"
-          disabled={selectedSeats.length === 0}
+          className={classNames(
+            "btn-primary btn",
+            navigation.state === "submitting" && "loading"
+          )}
+          disabled={
+            selectedSeats.length === 0 || navigation.state === "submitting"
+          }
         >
           {isAdmin ? "Valider" : "Ajouter au panier"}
         </button>

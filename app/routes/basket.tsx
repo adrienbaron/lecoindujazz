@@ -1,7 +1,8 @@
 import type { ActionArgs } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
-import { Form, Link, useRevalidator } from "@remix-run/react";
+import { Form, Link, useNavigation, useRevalidator } from "@remix-run/react";
 import { redirect } from "@remix-run/router";
+import classNames from "classnames";
 import { eq } from "drizzle-orm";
 import { useEffect, useMemo, useState } from "react";
 import { useTypedRouteLoaderData } from "remix-typedjson";
@@ -194,6 +195,8 @@ export default function Basket() {
   const expiresMinutes = Math.floor(expiresInSeconds / 60);
   const expiresSeconds = expiresInSeconds % 60;
 
+  const navigation = useNavigation();
+
   return (
     <div className="mx-auto flex max-w-screen-sm flex-col gap-4 p-2 md:p-4 lg:px-6">
       <h1 className="fluid-2xl">Panier</h1>
@@ -210,27 +213,39 @@ export default function Basket() {
                 {showToHumanString(show)}
               </h2>
               <ul className="flex flex-col divide-y divide-base-300">
-                {showSeats.map((seat) => (
-                  <li key={seat.id} className="flex flex-col gap-2 py-4">
-                    <div className="flex justify-between">
-                      <span>
-                        {sectionTypeToTitle[seat.sectionType]}{" "}
-                        {seatToHumanString(seat)}
-                      </span>
-                      <strong>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</strong>
-                    </div>
-                    <button
-                      className="btn-xs btn gap-1 self-start normal-case"
-                      name="delete"
-                      value={JSON.stringify({
-                        showId,
-                        seatId: seat.id,
-                      })}
-                    >
-                      <TrashIcon className="h-4 w-4" /> Retirer du panier
-                    </button>
-                  </li>
-                ))}
+                {showSeats.map((seat) => {
+                  const deleteValue = JSON.stringify({
+                    showId,
+                    seatId: seat.id,
+                  });
+                  const isDeletingSeat =
+                    navigation.state === "submitting" &&
+                    navigation.formData?.get("delete") === deleteValue;
+
+                  return (
+                    <li key={seat.id} className="flex flex-col gap-2 py-4">
+                      <div className="flex justify-between">
+                        <span>
+                          {sectionTypeToTitle[seat.sectionType]}{" "}
+                          {seatToHumanString(seat)}
+                        </span>
+                        <strong>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</strong>
+                      </div>
+                      <button
+                        className={classNames(
+                          "btn-xs btn gap-1 self-start normal-case",
+                          isDeletingSeat && "loading"
+                        )}
+                        disabled={navigation.state === "submitting"}
+                        name="delete"
+                        value={deleteValue}
+                      >
+                        {!isDeletingSeat && <TrashIcon className="h-4 w-4" />}{" "}
+                        Retirer du panier
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           );
@@ -260,7 +275,18 @@ export default function Basket() {
             </div>
           </div>
           <Form method="POST" className="flex justify-end">
-            <button type="submit" className="btn-primary btn">
+            <button
+              type="submit"
+              className={classNames(
+                "btn-primary btn",
+                navigation.state === "submitting" &&
+                  navigation.formData?.get("action") === "startCheckout" &&
+                  "loading"
+              )}
+              name="action"
+              value="startCheckout"
+              disabled={navigation.state === "submitting"}
+            >
               Valider le panier
             </button>
           </Form>
