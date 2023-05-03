@@ -173,41 +173,43 @@ export default function Book() {
         />
       </div>
       <section className="fixed inset-x-0 bottom-0 flex flex-col gap-4 bg-base-200 p-4 lg:relative">
-        <ul className="flex w-full flex-col gap-2">
-          {selectedSeats.map((seat) => {
-            const unavailableSeatForSelectedSeat = unavailableSeatsMap.get(
-              seat.id
-            );
+        {selectedSeats.length > 0 && (
+          <ul className="flex w-full flex-col gap-2">
+            {selectedSeats.map((seat) => {
+              const unavailableSeatForSelectedSeat = unavailableSeatsMap.get(
+                seat.id
+              );
 
-            return (
-              <li key={seat.id} className="flex justify-between">
-                <div className="flex flex-col gap-0.5">
-                  <span>
-                    {sectionTypeToTitle[seat.sectionType]}{" "}
-                    {seatToHumanString(seat)}
-                  </span>
-                  {isAdmin && unavailableSeatForSelectedSeat && (
-                    <span className="text-xs text-gray-400">
-                      {unavailableSeatForSelectedSeat.reason === "locked" &&
-                        "Dans un panier"}
-                      {unavailableSeatForSelectedSeat.reason === "purchased" &&
-                        "Vendu"}
+              return (
+                <li key={seat.id} className="flex justify-between">
+                  <div className="flex flex-col gap-0.5">
+                    <span>
+                      {sectionTypeToTitle[seat.sectionType]}{" "}
+                      {seatToHumanString(seat)}
                     </span>
+                    {isAdmin && unavailableSeatForSelectedSeat && (
+                      <span className="text-xs text-gray-400">
+                        {unavailableSeatForSelectedSeat.reason === "locked" &&
+                          "Dans un panier"}
+                        {unavailableSeatForSelectedSeat.reason ===
+                          "purchased" && "Vendu"}
+                      </span>
+                    )}
+                  </div>
+                  {!isAdmin && (
+                    <span>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</span>
                   )}
-                </div>
-                {!isAdmin && (
-                  <span>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</span>
-                )}
-                {isAdmin &&
-                  (unavailableSeatForSelectedSeat ? (
-                    <span className="text-success">Débloquer</span>
-                  ) : (
-                    <span className="text-error">Bloquer</span>
-                  ))}
-              </li>
-            );
-          })}
-        </ul>
+                  {isAdmin &&
+                    (unavailableSeatForSelectedSeat ? (
+                      <span className="text-success">Débloquer</span>
+                    ) : (
+                      <span className="text-error">Bloquer</span>
+                    ))}
+                </li>
+              );
+            })}
+          </ul>
+        )}
         <button
           type="submit"
           className="btn-primary btn block"
