@@ -5,6 +5,7 @@ import {
   useLoaderData,
   useNavigation,
   useParams,
+  useRevalidator,
   useRouteLoaderData,
 } from "@remix-run/react";
 import classNames from "classnames";
@@ -30,6 +31,7 @@ import {
 } from "~/services/db.service.server";
 import { getSessionStorage, getSetCookieHeader } from "~/session";
 import { formatPrice } from "~/utils/price";
+import { useOnFocus } from "~/utils/useOnFocus";
 
 export const loader = async ({
   context,
@@ -160,6 +162,12 @@ export default function Book() {
   const unavailableSeatsMap = new Map(
     allUnavailableSeats.map((seat) => [seat.seatId, seat])
   );
+
+  const revalidator = useRevalidator();
+  const revalidate = useCallback(() => {
+    revalidator.revalidate();
+  }, [revalidator]);
+  useOnFocus(revalidate);
 
   const navigation = useNavigation();
   return (

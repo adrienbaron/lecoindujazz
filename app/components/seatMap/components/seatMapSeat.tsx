@@ -19,11 +19,13 @@ export const SeatMapSeat: React.FC<Props> = ({
 }) => {
   const isUnavailable = unavailableSeatsIdSet.has(seat.id);
   const canBeBooked = !seat.isSecurity && !isUnavailable;
-  const canBeSelected =
-    !seat.isSecurity && (!isUnavailable || allowSelectUnavailableSeats);
 
   const [isSelected, setIsSelected] = React.useState(false);
   const pointerDownTimeInMsRef = React.useRef<number | null>(null);
+
+  const canBeSelected =
+    (!seat.isSecurity && (!isUnavailable || allowSelectUnavailableSeats)) ||
+    isSelected;
 
   return (
     <div>
