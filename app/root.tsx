@@ -4,6 +4,7 @@ import type {
   MetaFunction,
 } from "@remix-run/cloudflare";
 import {
+  isRouteErrorResponse,
   Link,
   Links,
   LiveReload,
@@ -11,8 +12,11 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteError,
 } from "@remix-run/react";
 import classNames from "classnames";
+import type { PropsWithChildren } from "react";
+import React from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
@@ -33,6 +37,46 @@ export const meta: MetaFunction = () => ({
   viewport: "width=device-width,initial-scale=1",
   "theme-color": "#202021",
 });
+
+interface LayoutProps extends PropsWithChildren {
+  isAdmin?: boolean;
+  headerItems?: React.ReactNode;
+}
+
+const Layout: React.FC<LayoutProps> = ({ isAdmin, headerItems, children }) => (
+  <html lang="en">
+    <head>
+      <Meta />
+      <Links />
+    </head>
+    <body>
+      <div className="min-h-screen">
+        <header
+          className={classNames(
+            "navbar transition-colors",
+            isAdmin ? "bg-red-950" : "bg-base-200"
+          )}
+        >
+          <div className="flex-1">
+            <Link to={"/"}>
+              <img src="/images/logo.png" alt="" height="36" width="150" />
+            </Link>
+          </div>
+          <div className="flex-none">{headerItems}</div>
+        </header>
+        <main>{children}</main>
+      </div>
+      <footer className="footer flex justify-end bg-base-200 p-8">
+        <Link to="/admin" className="link">
+          Administrateur
+        </Link>
+      </footer>
+      <ScrollRestoration />
+      <Scripts />
+      <LiveReload />
+    </body>
+  </html>
+);
 
 export const loader = async ({ context, request }: LoaderArgs) => {
   const { getSession } = getSessionStorage(context);
@@ -65,50 +109,59 @@ export default function App() {
   }>();
 
   return (
-    <html lang="en">
-      <head>
-        <Meta />
-        <Links />
-      </head>
-      <body>
-        <div className="min-h-screen">
-          <header
-            className={classNames(
-              "navbar transition-colors",
-              isAdmin ? "bg-red-950" : "bg-base-200"
-            )}
-          >
-            <div className="flex-1">
-              <Link to={"/"}>
-                <img src="/images/logo.png" alt="" height="36" width="150" />
-              </Link>
-            </div>
-            <div className="flex-none">
-              {!isAdmin && (
-                <Link to={"/basket"} className="btn-ghost btn">
-                  Panier ({lockedSeatsForSession.length})
-                </Link>
-              )}
-              {isAdmin && (
-                <Link to={"/admin"} className="badge-error badge">
-                  Administrateur
-                </Link>
-              )}
-            </div>
-          </header>
-          <main>
-            <Outlet />
-          </main>
+    <Layout
+      isAdmin={isAdmin}
+      headerItems={
+        <>
+          {!isAdmin && (
+            <Link to={"/basket"} className="btn-ghost btn">
+              Panier ({lockedSeatsForSession.length})
+            </Link>
+          )}
+          {isAdmin && (
+            <Link to={"/admin"} className="badge-error badge">
+              Administrateur
+            </Link>
+          )}
+        </>
+      }
+    >
+      <Outlet />
+    </Layout>
+  );
+}
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center gap-2 p-2">
+          {error.status === 404 ? (
+            <h1 className="fluid-2xl">404 - Page non trouvée</h1>
+          ) : (
+            <>
+              <h1 className="fluid-2xl">Houston, on a un problème</h1>
+              <p>Merci de contacter le support</p>
+            </>
+          )}
         </div>
-        <footer className="footer flex justify-end bg-base-200 p-8">
-          <Link to="/admin" className="link">
-            Administrateur
-          </Link>
-        </footer>
-        <ScrollRestoration />
-        <Scripts />
-        <LiveReload />
-      </body>
-    </html>
+      </Layout>
+    );
+  }
+
+  let errorMessage = "Unknown error";
+  if (error instanceof Error) {
+    errorMessage = error.message;
+  }
+
+  return (
+    <Layout>
+      <div className="flex flex-col items-center gap-2 p-2">
+        <h1 className="fluid-2xl">Une erreur est survenue</h1>
+        <p>Merci de contacter le support avec cette erreur:</p>
+        <pre>{errorMessage}</pre>
+      </div>
+    </Layout>
   );
 }
