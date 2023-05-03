@@ -45,11 +45,13 @@ export const SeatMapSeat: React.FC<Props> = ({
         className={classNames(
           "flex h-8 w-8 shrink-0 flex-col items-center justify-center text-sm",
           "peer-checked:border-4 peer-checked:border-green-400 peer-checked:shadow-md peer-checked:shadow-green-400 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-focus",
-          canBeBooked && "bg-green-700",
+          canBeBooked && !seat.isWheelchairAccessible && "bg-green-700",
+          seat.isWheelchairAccessible &&
+            canBeBooked &&
+            "bg-blue-300 text-black",
           !canBeBooked && "bg-red-500",
           !canBeSelected && "opacity-30",
-          seat.hasRestrictedView && "border-4 border-orange-300",
-          seat.isWheelchairAccessible && "bg-blue-300 text-black"
+          seat.hasRestrictedView && "border-4 border-orange-300"
         )}
         onPointerDownCapture={() => {
           pointerDownTimeInMsRef.current = Date.now();
