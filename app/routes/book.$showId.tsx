@@ -24,6 +24,7 @@ import {
   adminLockAndUnlockSeats,
   getAllUnavailableSeatsForShow,
   getDbFromContext,
+  getPurchasedSeatsForShow,
 } from "~/services/db.service.server";
 import { getSessionStorage, getSetCookieHeader } from "~/session";
 import { formatPrice } from "~/utils/price";
@@ -88,10 +89,12 @@ export const action = async ({
       )
     )
     .all();
-  const hasLockedSeats = seatLocks.some(
-    (seatLock) =>
-      seatLock.sessionId !== sessionId && seatLock.lockedUntil > new Date()
-  );
+  const purchasedSeats = await getPurchasedSeatsForShow(db, showId);
+  const hasLockedSeats =
+    seatLocks.some(
+      (seatLock) =>
+        seatLock.sessionId !== sessionId && seatLock.lockedUntil > new Date()
+    ) || purchasedSeats.some((seat) => selectedSeatsId.includes(seat.seatId));
   if (hasLockedSeats) {
     throw json({ error: "Some seats are already locked" }, { status: 400 });
   }

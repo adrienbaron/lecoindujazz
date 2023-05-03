@@ -27,7 +27,7 @@ export const getDbFromContext = (
   return drizzle(context.DB);
 };
 
-export const getPurchasedSeatsIdForShow = async (
+export const getPurchasedSeatsForShow = async (
   db: DrizzleD1Database,
   showId: string
 ): Promise<Pick<PurchasedSeatModel, "purchaseId" | "seatId">[]> =>
@@ -66,7 +66,7 @@ export const getAllUnavailableSeatsForShow = async (
 ): Promise<UnavailableSeat[]> => {
   const [lockedSeats, purchasedSeats] = await Promise.all([
     getLockedSeatsForShow(db, showId),
-    getPurchasedSeatsIdForShow(db, showId),
+    getPurchasedSeatsForShow(db, showId),
   ]);
 
   return [
@@ -151,7 +151,7 @@ export const adminLockAndUnlockSeats = async (
 ): Promise<void> => {
   const [lockedSeats, purchasedSeats] = await Promise.all([
     getLockedSeatsForShow(db, showId),
-    getPurchasedSeatsIdForShow(db, showId),
+    getPurchasedSeatsForShow(db, showId),
   ]);
 
   const lockedSeatsIdSet = new Set(lockedSeats.map((seat) => seat.seatId));
