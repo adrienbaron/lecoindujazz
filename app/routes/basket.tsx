@@ -1,12 +1,14 @@
 import type { ActionArgs } from "@remix-run/cloudflare";
+import { json } from "@remix-run/cloudflare";
 import { Form, Link, useRevalidator } from "@remix-run/react";
 import { redirect } from "@remix-run/router";
 import { eq } from "drizzle-orm";
 import { useEffect, useMemo, useState } from "react";
 import { useTypedRouteLoaderData } from "remix-typedjson";
 import Stripe from "stripe";
+import { z } from "zod";
 
-import { WarningIcon } from "~/components/icons";
+import { TrashIcon, WarningIcon } from "~/components/icons";
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
 import type { LockedSeatModel } from "~/models/dbSchema";
 import { lockedSeatsTable } from "~/models/dbSchema";
@@ -22,9 +24,15 @@ import { showByIdMap, showToHumanString } from "~/models/shows";
 import {
   getDbFromContext,
   getLockedSeatsForSession,
+  unlockSeat,
 } from "~/services/db.service.server";
 import { getSessionStorage } from "~/session";
 import { formatPrice } from "~/utils/price";
+
+const deleteSeatDataSchema = z.object({
+  showId: z.string(),
+  seatId: z.string(),
+});
 
 export const action = async ({ context, request }: ActionArgs) => {
   if (!context.IS_OPEN) {
@@ -42,6 +50,25 @@ export const action = async ({ context, request }: ActionArgs) => {
   const lockedSeatsForSession = await getLockedSeatsForSession(db, sessionId);
   if (!lockedSeatsForSession.length) {
     return redirect("/");
+  }
+
+  const formData = await request.formData();
+  const deleteSeatData = formData.get("delete");
+  if (deleteSeatData) {
+    const seatToDelete = deleteSeatDataSchema.parse(
+      JSON.parse(deleteSeatData as string)
+    );
+    const hasSeatToDeleteInSession = lockedSeatsForSession.some(
+      (seatLock) =>
+        seatLock.showId === seatToDelete.showId &&
+        seatLock.seatId === seatToDelete.seatId
+    );
+    if (!hasSeatToDeleteInSession) {
+      throw new Error("Seat not found in session");
+    }
+
+    await unlockSeat(db, seatToDelete.showId, seatToDelete.seatId);
+    return json({ success: true });
   }
 
   // Lock seats for 45 minutes
@@ -170,7 +197,7 @@ export default function Basket() {
   return (
     <div className="mx-auto flex max-w-screen-sm flex-col gap-4 p-2 md:p-4 lg:px-6">
       <h1 className="fluid-2xl">Panier</h1>
-      <div className="flex flex-col gap-2">
+      <Form className="flex flex-col gap-2" method="DELETE">
         {[...seatsPerShow.entries()].map(([showId, showSeats]) => {
           const show = showByIdMap.get(showId);
           if (!show) {
@@ -182,21 +209,33 @@ export default function Basket() {
               <h2 className="font-medium fluid-lg">
                 {showToHumanString(show)}
               </h2>
-              <ul>
+              <ul className="flex flex-col divide-y divide-base-300">
                 {showSeats.map((seat) => (
-                  <li key={seat.id} className="flex justify-between">
-                    <span>
-                      {sectionTypeToTitle[seat.sectionType]}{" "}
-                      {seatToHumanString(seat)}
-                    </span>
-                    <strong>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</strong>
+                  <li key={seat.id} className="flex flex-col gap-2 py-4">
+                    <div className="flex justify-between">
+                      <span>
+                        {sectionTypeToTitle[seat.sectionType]}{" "}
+                        {seatToHumanString(seat)}
+                      </span>
+                      <strong>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</strong>
+                    </div>
+                    <button
+                      className="btn-xs btn gap-1 self-start normal-case"
+                      name="delete"
+                      value={JSON.stringify({
+                        showId,
+                        seatId: seat.id,
+                      })}
+                    >
+                      <TrashIcon className="h-4 w-4" /> Retirer du panier
+                    </button>
                   </li>
                 ))}
               </ul>
             </div>
           );
         })}
-      </div>
+      </Form>
 
       {lockedSeatsForSession.length > 0 && (
         <>

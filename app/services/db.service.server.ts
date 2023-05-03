@@ -229,3 +229,18 @@ export const adminLockAndUnlockSeats = async (
         .run(),
   ]);
 };
+
+export const unlockSeat = async (
+  db: DrizzleD1Database,
+  showId: string,
+  seatId: string
+) =>
+  db
+    .delete(lockedSeatsTable)
+    .where(
+      and(
+        eq(lockedSeatsTable.showId, showId),
+        eq(lockedSeatsTable.seatId, seatId)
+      )
+    )
+    .run();
