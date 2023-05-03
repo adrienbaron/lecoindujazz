@@ -197,6 +197,10 @@ export default function Basket() {
 
   const navigation = useNavigation();
 
+  const isValidatingBasket =
+    navigation.state !== "idle" &&
+    navigation.formData?.get("action") === "startCheckout";
+
   return (
     <div className="mx-auto flex max-w-screen-sm flex-col gap-4 p-2 md:p-4 lg:px-6">
       <h1 className="fluid-2xl">Panier</h1>
@@ -219,7 +223,7 @@ export default function Basket() {
                     seatId: seat.id,
                   });
                   const isDeletingSeat =
-                    navigation.state === "submitting" &&
+                    navigation.state !== "idle" &&
                     navigation.formData?.get("delete") === deleteValue;
 
                   return (
@@ -236,7 +240,7 @@ export default function Basket() {
                           "btn-xs btn gap-1 self-start normal-case",
                           isDeletingSeat && "loading"
                         )}
-                        disabled={navigation.state === "submitting"}
+                        disabled={navigation.state !== "idle"}
                         name="delete"
                         value={deleteValue}
                       >
@@ -279,13 +283,11 @@ export default function Basket() {
               type="submit"
               className={classNames(
                 "btn-primary btn",
-                navigation.state === "submitting" &&
-                  navigation.formData?.get("action") === "startCheckout" &&
-                  "loading"
+                isValidatingBasket && "loading"
               )}
               name="action"
               value="startCheckout"
-              disabled={navigation.state === "submitting"}
+              disabled={navigation.state !== "idle"}
             >
               Valider le panier
             </button>

@@ -234,11 +234,9 @@ export default function Book() {
           type="submit"
           className={classNames(
             "btn-primary btn",
-            navigation.state === "submitting" && "loading"
+            navigation.state !== "idle" && "loading"
           )}
-          disabled={
-            selectedSeats.length === 0 || navigation.state === "submitting"
-          }
+          disabled={selectedSeats.length === 0 || navigation.state !== "idle"}
         >
           {isAdmin ? "Valider" : "Ajouter au panier"}
         </button>
