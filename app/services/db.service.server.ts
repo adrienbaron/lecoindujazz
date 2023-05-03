@@ -183,6 +183,19 @@ export const adminLockAndUnlockSeats = async (
       .run();
   }
 
+  if (purchasedSeatsToUnlock.length > 0) {
+    db.delete(purchaseTable)
+      .where(
+        inArray(
+          purchaseTable.id,
+          purchasedSeatsToUnlock.map(
+            (seatId) => purchasedSeatsMap.get(seatId)?.purchaseId as string
+          )
+        )
+      )
+      .run();
+  }
+
   await Promise.all([
     lockedSeatsToUnlock.length > 0 &&
       db
@@ -201,18 +214,6 @@ export const adminLockAndUnlockSeats = async (
           and(
             eq(purchasedSeatsTable.showId, showId),
             inArray(purchasedSeatsTable.seatId, purchasedSeatsToUnlock)
-          )
-        )
-        .run(),
-    purchasedSeatsToUnlock.length > 0 &&
-      db
-        .delete(purchaseTable)
-        .where(
-          inArray(
-            purchaseTable.id,
-            purchasedSeatsToUnlock.map(
-              (seatId) => purchasedSeatsMap.get(seatId)?.purchaseId as string
-            )
           )
         )
         .run(),
