@@ -166,6 +166,20 @@ export default function Book() {
     >
       <div className="flex flex-col gap-2 overflow-hidden p-2 md:p-4 lg:px-6">
         <h1 className="fluid-2xl">{showToHumanString(show)}</h1>
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-1 text-sm">
+            <div className="h-4 w-4 bg-green-700" />
+            <span>Disponible</span>
+          </div>
+          <div className="flex items-center gap-1 text-sm">
+            <div className="h-4 w-4 border-4 border-orange-300 bg-green-700" />
+            <span>Visibilitée réduite</span>
+          </div>
+          <div className="flex items-center gap-1 text-sm">
+            <div className="h-4 w-4 bg-blue-300" />
+            <span>P.M.R</span>
+          </div>
+        </div>
         <SeatMap
           unavailableSeats={allUnavailableSeats}
           onSeatToggle={onSeatToggle}

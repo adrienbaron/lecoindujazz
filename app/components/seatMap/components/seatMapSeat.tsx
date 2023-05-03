@@ -49,7 +49,7 @@ export const SeatMapSeat: React.FC<Props> = ({
           !canBeBooked && "bg-red-500",
           !canBeSelected && "opacity-30",
           seat.hasRestrictedView && "border-4 border-orange-300",
-          seat.isWheelchairAccessible && "border-4 border-blue-300"
+          seat.isWheelchairAccessible && "bg-blue-300 text-black"
         )}
         onPointerDownCapture={() => {
           pointerDownTimeInMsRef.current = Date.now();
