@@ -177,7 +177,7 @@ export default function Book() {
           </div>
           <div className="flex items-center gap-1 text-sm">
             <div className="h-4 w-4 bg-blue-300" />
-            <span>P.M.R</span>
+            <span>PMR</span>
           </div>
         </div>
         <SeatMap
