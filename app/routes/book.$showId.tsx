@@ -115,7 +115,7 @@ export const action = async ({
     )
   );
 
-  const lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
+  const lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
   await db
     .insert(lockedSeatsTable)
     .values(
