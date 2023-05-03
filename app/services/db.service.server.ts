@@ -1,7 +1,9 @@
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { drizzle } from "drizzle-orm/d1";
+import { v4 as uuidv4 } from "uuid";
 
+import type { LockedSeatModel } from "~/models/dbSchema";
 import {
   lockedSeatsTable,
   purchasedSeatsTable,
@@ -25,30 +27,48 @@ export const getDbFromContext = (
   return drizzle(context.DB);
 };
 
+export const getPurchasedSeatsIdForShow = async (
+  db: DrizzleD1Database,
+  showId: string
+): Promise<string[]> => {
+  const purchasedSeats = await db
+    .select({
+      seatId: purchasedSeatsTable.seatId,
+    })
+    .from(purchasedSeatsTable)
+    .where(eq(purchasedSeatsTable.showId, showId))
+    .all();
+
+  return purchasedSeats.map((seat) => seat.seatId);
+};
+
+export const getLockedSeatsForShow = async (
+  db: DrizzleD1Database,
+  showId: string
+): Promise<Pick<LockedSeatModel, "seatId" | "sessionId" | "lockedUntil">[]> => {
+  return await db
+    .select({
+      seatId: lockedSeatsTable.seatId,
+      sessionId: lockedSeatsTable.sessionId,
+      lockedUntil: lockedSeatsTable.lockedUntil,
+    })
+    .from(lockedSeatsTable)
+    .where(
+      and(
+        eq(lockedSeatsTable.showId, showId),
+        gt(lockedSeatsTable.lockedUntil, new Date())
+      )
+    )
+    .all();
+};
+
 export const getAllUnavailableSeatsForShow = async (
   db: DrizzleD1Database,
   showId: string
 ): Promise<UnavailableSeat[]> => {
   const [lockedSeats, purchasedSeats] = await Promise.all([
-    db
-      .select({
-        seatId: lockedSeatsTable.seatId,
-      })
-      .from(lockedSeatsTable)
-      .where(
-        and(
-          eq(lockedSeatsTable.showId, showId),
-          gt(lockedSeatsTable.lockedUntil, new Date())
-        )
-      )
-      .all(),
-    db
-      .select({
-        seatId: purchasedSeatsTable.seatId,
-      })
-      .from(purchasedSeatsTable)
-      .where(eq(purchasedSeatsTable.showId, showId))
-      .all(),
+    getLockedSeatsForShow(db, showId),
+    getPurchasedSeatsIdForShow(db, showId),
   ]);
 
   return [
@@ -57,9 +77,9 @@ export const getAllUnavailableSeatsForShow = async (
       seatId: seat.seatId,
       reason: "locked" as const,
     })),
-    ...purchasedSeats.map((seat) => ({
+    ...purchasedSeats.map((seatId) => ({
       showId,
-      seatId: seat.seatId,
+      seatId: seatId,
       reason: "purchased" as const,
     })),
   ];
@@ -125,3 +145,75 @@ export async function registerPurchase(
     )
     .run();
 }
+
+export const adminLockAndUnlockSeats = async (
+  db: DrizzleD1Database,
+  showId: string,
+  selectedSeatsId: string[]
+): Promise<void> => {
+  const [lockedSeats, purchasedSeats] = await Promise.all([
+    getLockedSeatsForShow(db, showId),
+    getPurchasedSeatsIdForShow(db, showId),
+  ]);
+
+  const lockedSeatsIdSet = new Set(lockedSeats.map((seat) => seat.seatId));
+  const purchasedSeatsIdSet = new Set(purchasedSeats);
+
+  const lockedSeatsToUnlock = selectedSeatsId.filter((selectedSeatId) =>
+    lockedSeatsIdSet.has(selectedSeatId)
+  );
+  const purchasedSeatsToUnlock = selectedSeatsId.filter((selectedSeatId) =>
+    purchasedSeatsIdSet.has(selectedSeatId)
+  );
+  const seatsToMarkAsPurchased = selectedSeatsId.filter(
+    (selectedSeatId) =>
+      !lockedSeatsIdSet.has(selectedSeatId) &&
+      !purchasedSeatsIdSet.has(selectedSeatId)
+  );
+
+  const adminPurchaseId = `ADMIN:${uuidv4()}`;
+  if (seatsToMarkAsPurchased.length > 0) {
+    await db
+      .insert(purchaseTable)
+      .values({
+        id: adminPurchaseId,
+        name: "Admin",
+        email: "",
+      })
+      .run();
+  }
+
+  await Promise.all([
+    lockedSeatsToUnlock.length > 0 &&
+      db
+        .delete(lockedSeatsTable)
+        .where(
+          and(
+            eq(lockedSeatsTable.showId, showId),
+            inArray(lockedSeatsTable.seatId, lockedSeatsToUnlock)
+          )
+        )
+        .run(),
+    purchasedSeatsToUnlock.length > 0 &&
+      db
+        .delete(purchasedSeatsTable)
+        .where(
+          and(
+            eq(purchasedSeatsTable.showId, showId),
+            inArray(purchasedSeatsTable.seatId, purchasedSeatsToUnlock)
+          )
+        )
+        .run(),
+    seatsToMarkAsPurchased.length > 0 &&
+      db
+        .insert(purchasedSeatsTable)
+        .values(
+          seatsToMarkAsPurchased.map((seatId) => ({
+            showId,
+            seatId,
+            purchaseId: adminPurchaseId,
+          }))
+        )
+        .run(),
+  ]);
+};

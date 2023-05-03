@@ -21,6 +21,7 @@ import {
 } from "~/models/seatMap";
 import { showByIdMap, showToHumanString } from "~/models/shows";
 import {
+  adminLockAndUnlockSeats,
   getAllUnavailableSeatsForShow,
   getDbFromContext,
 } from "~/services/db.service.server";
@@ -67,20 +68,26 @@ export const action = async ({
   const sessionId = session.get("sessionId");
 
   const formData = await request.formData();
-  const seatIds = formData.getAll("seat");
+  const selectedSeatsId = formData.getAll("seat") as string[];
 
   const db = getDbFromContext(context);
+
+  const isAdmin = session.get("isAdmin");
+  if (isAdmin) {
+    await adminLockAndUnlockSeats(db, showId, selectedSeatsId);
+    return json({ success: true });
+  }
+
   const seatLocks = await db
     .select()
     .from(lockedSeatsTable)
     .where(
       and(
         eq(lockedSeatsTable.showId, showId),
-        inArray(lockedSeatsTable.seatId, seatIds as string[])
+        inArray(lockedSeatsTable.seatId, selectedSeatsId)
       )
     )
     .all();
-
   const hasLockedSeats = seatLocks.some(
     (seatLock) =>
       seatLock.sessionId !== sessionId && seatLock.lockedUntil > new Date()
@@ -109,7 +116,7 @@ export const action = async ({
   await db
     .insert(lockedSeatsTable)
     .values(
-      seatIds.map((seatId) => ({
+      selectedSeatsId.map((seatId) => ({
         showId,
         seatId: seatId as string,
         sessionId,
