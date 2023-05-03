@@ -223,7 +223,8 @@ export default function Basket() {
               <span>
                 Votre panier expire dans{" "}
                 <strong>
-                  {expiresMinutes} minutes et {expiresSeconds} secondes
+                  {expiresMinutes > 0 && <>{expiresMinutes} minutes et</>}{" "}
+                  {expiresSeconds} secondes
                 </strong>
               </span>
             </div>
