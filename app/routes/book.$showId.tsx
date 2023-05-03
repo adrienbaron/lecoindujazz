@@ -195,9 +195,12 @@ export default function Book() {
               );
 
               return (
-                <li key={seat.id} className="flex justify-between">
+                <li
+                  key={seat.id}
+                  className="flex items-center justify-between gap-2"
+                >
                   <div className="flex flex-col gap-0.5">
-                    <span>
+                    <span className="font-medium">
                       {sectionTypeToTitle[seat.sectionType]}{" "}
                       {seatToHumanString(seat)}
                     </span>

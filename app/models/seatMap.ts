@@ -23,8 +23,16 @@ export const sectionTypeToTitle: Record<SeatSectionType, string> = {
   THIRD_GALLERY: "Troisième galerie",
 };
 
-export const seatToHumanString = ({ num, rowLetter, isBis }: Seat) => {
-  return `${rowLetter}${num}${isBis ? " bis" : ""}`;
+export const seatToHumanString = ({
+  num,
+  rowLetter,
+  isBis,
+  hasRestrictedView,
+  isWheelchairAccessible,
+}: Seat) => {
+  return `${rowLetter}${num}${isBis ? " bis" : ""}${
+    hasRestrictedView ? " (vue réduite)" : ""
+  }${isWheelchairAccessible ? " (PMR)" : ""}`;
 };
 
 export interface UnavailableSeat {

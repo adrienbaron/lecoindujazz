@@ -67,9 +67,10 @@ export const action = async ({ context, request }: ActionArgs) => {
         price_data: {
           unit_amount: PRICE_PER_SEAT_IN_CENTS,
           product_data: {
-            name: `${showToHumanString(show)} | ${
-              sectionTypeToTitle[seat.sectionType]
-            }: ${seatToHumanString(seat)}`,
+            name: `${sectionTypeToTitle[seat.sectionType]} ${seatToHumanString(
+              seat
+            )}`,
+            description: `${showToHumanString(show)}`,
           },
           currency: "EUR",
         },
