@@ -23,6 +23,7 @@ export const SeatMapSeat: React.FC<Props> = ({
     !seat.isSecurity && (!isUnavailable || allowSelectUnavailableSeats);
 
   const [isSelected, setIsSelected] = React.useState(false);
+  const pointerDownTimeInMsRef = React.useRef<number | null>(null);
 
   return (
     <div>
@@ -38,6 +39,7 @@ export const SeatMapSeat: React.FC<Props> = ({
           setIsSelected(e.target.checked);
         }}
       />
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-noninteractive-element-interactions */}
       <label
         htmlFor={seat.id}
         className={classNames(
@@ -49,6 +51,19 @@ export const SeatMapSeat: React.FC<Props> = ({
           seat.hasRestrictedView && "border-4 border-orange-300",
           seat.isWheelchairAccessible && "border-4 border-blue-300"
         )}
+        onPointerDownCapture={() => {
+          pointerDownTimeInMsRef.current = Date.now();
+        }}
+        onClick={(event) => {
+          if (!pointerDownTimeInMsRef.current) {
+            return;
+          }
+
+          if (Date.now() - pointerDownTimeInMsRef.current > 250) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
       >
         {!isSelected && (
           <>

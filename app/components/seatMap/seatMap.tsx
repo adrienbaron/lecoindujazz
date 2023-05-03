@@ -57,6 +57,15 @@ export const SeatMap: React.FC<SeatMapProps> = ({
       "wheel",
       panzoom.zoomWithWheel
     );
+
+    const currentFloorPlanRef = floorPlanRef.current;
+    return () => {
+      panzoom.destroy();
+      currentFloorPlanRef.parentElement?.removeEventListener(
+        "wheel",
+        panzoom.zoomWithWheel
+      );
+    };
   }, []);
 
   return (
