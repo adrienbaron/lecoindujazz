@@ -145,7 +145,9 @@ export default function Book() {
     }
   }, []);
 
-  const unavailableSeatsSet = new Set(allUnavailableSeats.map((s) => s.seatId));
+  const unavailableSeatsMap = new Map(
+    allUnavailableSeats.map((seat) => [seat.seatId, seat])
+  );
 
   return (
     <Form
@@ -162,20 +164,39 @@ export default function Book() {
       </div>
       <section className="fixed inset-x-0 bottom-0 flex flex-col gap-4 bg-base-200 p-4 lg:relative">
         <ul className="flex w-full flex-col gap-2">
-          {selectedSeats.map((seat) => (
-            <li key={seat.id} className="flex justify-between">
-              <span>
-                {sectionTypeToTitle[seat.sectionType]} {seatToHumanString(seat)}
-              </span>
-              {!isAdmin && <span>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</span>}
-              {isAdmin &&
-                (unavailableSeatsSet.has(seat.id) ? (
-                  <span className="text-success">Débloquer</span>
-                ) : (
-                  <span className="text-error">Bloquer</span>
-                ))}
-            </li>
-          ))}
+          {selectedSeats.map((seat) => {
+            const unavailableSeatForSelectedSeat = unavailableSeatsMap.get(
+              seat.id
+            );
+
+            return (
+              <li key={seat.id} className="flex justify-between">
+                <div className="flex flex-col gap-0.5">
+                  <span>
+                    {sectionTypeToTitle[seat.sectionType]}{" "}
+                    {seatToHumanString(seat)}
+                  </span>
+                  {isAdmin && unavailableSeatForSelectedSeat && (
+                    <span className="text-xs text-gray-400">
+                      {unavailableSeatForSelectedSeat.reason === "locked" &&
+                        "Dans un panier"}
+                      {unavailableSeatForSelectedSeat.reason === "purchased" &&
+                        "Vendu"}
+                    </span>
+                  )}
+                </div>
+                {!isAdmin && (
+                  <span>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</span>
+                )}
+                {isAdmin &&
+                  (unavailableSeatForSelectedSeat ? (
+                    <span className="text-success">Débloquer</span>
+                  ) : (
+                    <span className="text-error">Bloquer</span>
+                  ))}
+              </li>
+            );
+          })}
         </ul>
         <button
           type="submit"
