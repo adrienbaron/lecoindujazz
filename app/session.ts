@@ -26,8 +26,7 @@ export const getSessionStorage = <Data = SessionData, FlashData = Data>(
         maxAge: 7 * 24 * 60 * 60,
         path: "/",
 
-        secrets: [context.SESSION_SECRET],
-        secure: true,
+        secrets: [context.SESSION_SECRET as string],
       },
     });
   }
