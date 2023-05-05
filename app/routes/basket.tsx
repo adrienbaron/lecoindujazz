@@ -39,9 +39,9 @@ const seatLockReferenceSchema = z.object({
 const childOnLapsPriceInCents = 5_50;
 
 export const action = async ({ context, request }: ActionArgs) => {
-  if (!context.IS_OPEN) {
-    throw new Error("Booking is closed");
-  }
+  // if (!context.IS_OPEN) {
+  //   throw new Error("Booking is closed");
+  // }
 
   const { getSession } = getSessionStorage(context);
   const session = await getSession(request.headers.get("Cookie"));
