@@ -122,8 +122,9 @@ export const action = async ({ context, request }: ActionArgs) => {
           product_data: {
             name: `${sectionTypeToTitle[seat.sectionType]} ${seatToHumanString(
               seat
-            )} ${seatLock.hasChildOnLap ? "(+ Enfant -4 ans)" : ""}`,
-            description: `${showToHumanString(show)}`,
+            )} ${
+              seatLock.hasChildOnLap ? "(+ Enfant -4 ans)" : ""
+            } | ${showToHumanString(show)}`,
           },
           currency: "EUR",
         },
