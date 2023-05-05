@@ -28,5 +28,7 @@ export const showToHumanString = (show: Show): string =>
   `${show.title} - ${show.datetime.toLocaleString("fr-FR", {
     timeZone: "Europe/Paris",
     dateStyle: "medium",
+  })} à ${show.datetime.toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
     timeStyle: "short",
   })}`;

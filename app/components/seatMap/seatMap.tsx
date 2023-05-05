@@ -46,7 +46,8 @@ export const SeatMap: React.FC<SeatMapProps> = ({
 
       panzoom.pan(
         -floorPlanRef.current.clientWidth / 2,
-        -floorPlanRef.current.clientHeight * 1.8,
+        -floorPlanRef.current.clientHeight *
+          ("ontouchstart" in window ? 2 : 0.5),
         {
           animate: false,
         }
