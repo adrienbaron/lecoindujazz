@@ -172,28 +172,30 @@ export default function Book() {
   const navigation = useNavigation();
   return (
     <Form
-      className="grid w-full grid-rows-[80vh_0] lg:grid-cols-[auto_300px] lg:grid-rows-none"
+      className="grid w-full grid-rows-[85vh_0] lg:grid-cols-[auto_300px] lg:grid-rows-none"
       method="POST"
       reloadDocument={isAdmin}
     >
-      <div className="flex flex-col gap-2 overflow-hidden p-2 md:p-4 lg:px-6">
-        <h1 className="fluid-2xl">{showToHumanString(show)}</h1>
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <div className="flex items-center gap-1 text-sm">
-            <div className="h-4 w-4 bg-green-700" />
-            <span>Disponible</span>
-          </div>
-          <div className="flex items-center gap-1 text-sm">
-            <div className="h-4 w-4 border-4 border-orange-300 bg-green-700" />
-            <span>Visibilitée réduite</span>
-          </div>
-          <div className="flex items-center gap-1 text-sm">
-            <div className="h-4 w-4 bg-blue-300" />
-            <span>PMR</span>
-          </div>
-          <div className="flex items-center gap-1 text-sm">
-            <div className="bg-green-700 px-1 text-xs font-medium">bis</div>
-            <span>Strapontin</span>
+      <div className="flex flex-col gap-2 overflow-hidden">
+        <div className="px-4 py-2">
+          <h1 className="fluid-2xl">{showToHumanString(show)}</h1>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <div className="flex items-center gap-1 text-sm">
+              <div className="h-4 w-4 bg-green-700" />
+              <span>Disponible</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              <div className="h-4 w-4 border-4 border-orange-300 bg-green-700" />
+              <span>Visibilitée réduite</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              <div className="h-4 w-4 bg-blue-300" />
+              <span>PMR</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              <div className="bg-green-700 px-1 text-xs font-medium">bis</div>
+              <span>Strapontin</span>
+            </div>
           </div>
         </div>
         <SeatMap

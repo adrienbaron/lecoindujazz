@@ -46,7 +46,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
 
       panzoom.pan(
         -floorPlanRef.current.clientWidth / 2,
-        -floorPlanRef.current.clientHeight * 1.5,
+        -floorPlanRef.current.clientHeight * 1.8,
         {
           animate: false,
         }
@@ -70,9 +70,12 @@ export const SeatMap: React.FC<SeatMapProps> = ({
   }, []);
 
   return (
-    <div className="overflow-hidden transition-opacity" style={{ opacity: 0 }}>
+    <div
+      className="max-h-[90vh] overflow-hidden transition-opacity"
+      style={{ opacity: 0 }}
+    >
       <div
-        className="flex w-fit flex-col items-stretch gap-4"
+        className="flex w-fit flex-col items-stretch gap-8"
         ref={floorPlanRef}
         onPointerDownCapture={() => {
           pointerDownTimeInMsRef.current = Date.now();
@@ -90,8 +93,8 @@ export const SeatMap: React.FC<SeatMapProps> = ({
         ))}
 
         <div className="flex justify-center">
-          <div className="flex items-center justify-center border-2 border-gray-900 bg-gray-800 px-8 py-4">
-            Scene
+          <div className="flex w-1/3 items-center justify-center border-4 border-gray-600 bg-gray-800 py-6 font-medium text-gray-300 fluid-xl">
+            Scène
           </div>
         </div>
       </div>
