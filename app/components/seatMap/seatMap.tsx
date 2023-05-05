@@ -9,12 +9,14 @@ interface SeatMapProps {
   unavailableSeats: UnavailableSeat[];
   onSeatToggle: (seat: Seat, isSelected: boolean) => void;
   allowSelectUnavailableSeats?: boolean;
+  keyRef?: React.MutableRefObject<number | null>;
 }
 
 export const SeatMap: React.FC<SeatMapProps> = ({
   unavailableSeats,
   onSeatToggle,
   allowSelectUnavailableSeats,
+  keyRef,
 }) => {
   const unavailableSeatsIdSet = useMemo(
     () => new Set(unavailableSeats.map((seat) => seat.seatId)),
@@ -84,7 +86,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
       >
         {calaisTheatreAllSections.map((section) => (
           <SeatMapSection
-            key={section.type}
+            key={`${section.type}${keyRef?.current ?? ""}`}
             section={section}
             unavailableSeatsIdSet={unavailableSeatsIdSet}
             onSeatToggle={onSeatToggle}

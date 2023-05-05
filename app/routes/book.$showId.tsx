@@ -14,6 +14,7 @@ import React, { useCallback } from "react";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
+import { WarningIcon } from "~/components/icons";
 import { SeatMap } from "~/components/seatMap/seatMap";
 import { lockedSeatsTable } from "~/models/dbSchema";
 import type { Seat } from "~/models/seatMap";
@@ -100,7 +101,10 @@ export const action = async ({
         seatLock.sessionId !== sessionId && seatLock.lockedUntil > new Date()
     ) || purchasedSeats.some((seat) => selectedSeatsId.includes(seat.seatId));
   if (hasLockedSeats) {
-    throw json({ error: "Some seats are already locked" }, { status: 400 });
+    return json(
+      { success: false, reason: "UNAVAILABLE_SEATS" },
+      { status: 400 }
+    );
   }
 
   await Promise.all(
@@ -140,6 +144,9 @@ export default function Book() {
   const { isAdmin } = useRouteLoaderData("root") as { isAdmin: boolean };
   const [selectedSeats, setSelectedSeats] = React.useState<Seat[]>([]);
 
+  const formKeyRef = React.useRef(Date.now());
+  const infoMessageRef = React.useRef<string | null>(null);
+
   const { showId } = useParams<{ showId: string }>();
   if (!showId) {
     throw new Error("Missing showId");
@@ -149,7 +156,21 @@ export default function Book() {
     throw new Error(`Show not found for id ${showId}`);
   }
 
+  const selectedSeatsSet = new Set(selectedSeats.map((seat) => seat.id));
+  if (
+    allUnavailableSeats
+      .filter((seat) => seat.showId === showId)
+      .some((seat) => selectedSeatsSet.has(seat.seatId))
+  ) {
+    formKeyRef.current = Date.now();
+    infoMessageRef.current =
+      "Certains sieges ont été reservés par un autre utilisateur, votre séléction a été réinitialisée";
+    setSelectedSeats([]);
+  }
+
   const onSeatToggle = useCallback((seat: Seat, isSelected: boolean) => {
+    infoMessageRef.current = null;
+
     if (isSelected) {
       setSelectedSeats((selectedSeats) => [...selectedSeats, seat]);
     } else {
@@ -202,6 +223,7 @@ export default function Book() {
           unavailableSeats={allUnavailableSeats}
           onSeatToggle={onSeatToggle}
           allowSelectUnavailableSeats={isAdmin}
+          keyRef={formKeyRef}
         />
       </div>
       <section className="fixed inset-x-0 bottom-0 flex flex-col gap-4 bg-base-200 p-4 lg:relative">
@@ -242,6 +264,14 @@ export default function Book() {
               );
             })}
           </ul>
+        )}
+        {infoMessageRef.current && (
+          <div className="alert alert-info px-2 py-1 text-sm">
+            <div>
+              <WarningIcon />
+              <span>{infoMessageRef.current}</span>
+            </div>
+          </div>
         )}
         <button
           type="submit"
