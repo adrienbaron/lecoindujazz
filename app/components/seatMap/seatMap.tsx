@@ -21,6 +21,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
     [unavailableSeats]
   );
   const floorPlanRef = React.useRef<HTMLDivElement>(null);
+  const pointerDownTimeInMsRef = React.useRef<number | null>(null);
 
   useEffect(() => {
     if (!floorPlanRef.current) {
@@ -30,9 +31,9 @@ export const SeatMap: React.FC<SeatMapProps> = ({
     const panzoom = Panzoom(floorPlanRef.current, {
       contain: "inside",
       minScale: 0.2,
-      maxScale: 1.5,
+      maxScale: 2,
       overflow: "hidden",
-      step: 0.1,
+      step: "ontouchstart" in window ? 0.15 : 0.1,
     });
 
     setTimeout(() => {
@@ -73,6 +74,9 @@ export const SeatMap: React.FC<SeatMapProps> = ({
       <div
         className="flex w-fit flex-col items-stretch gap-4"
         ref={floorPlanRef}
+        onPointerDownCapture={() => {
+          pointerDownTimeInMsRef.current = Date.now();
+        }}
       >
         {calaisTheatreAllSections.map((section) => (
           <SeatMapSection
@@ -81,6 +85,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
             unavailableSeatsIdSet={unavailableSeatsIdSet}
             onSeatToggle={onSeatToggle}
             allowSelectUnavailableSeats={allowSelectUnavailableSeats}
+            pointerDownTimeInMsRef={pointerDownTimeInMsRef}
           />
         ))}
 

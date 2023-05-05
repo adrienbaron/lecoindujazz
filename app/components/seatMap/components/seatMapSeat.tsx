@@ -9,6 +9,7 @@ interface Props {
   unavailableSeatsIdSet: Set<string>;
   onSeatToggle: (seat: Seat, isSelected: boolean) => void;
   allowSelectUnavailableSeats?: boolean;
+  pointerDownTimeInMsRef: React.MutableRefObject<number | null>;
 }
 
 export const SeatMapSeat: React.FC<Props> = ({
@@ -16,12 +17,12 @@ export const SeatMapSeat: React.FC<Props> = ({
   unavailableSeatsIdSet,
   allowSelectUnavailableSeats,
   onSeatToggle,
+  pointerDownTimeInMsRef,
 }) => {
   const isUnavailable = unavailableSeatsIdSet.has(seat.id);
   const canBeBooked = !seat.isSecurity && !isUnavailable;
 
   const [isSelected, setIsSelected] = React.useState(false);
-  const pointerDownTimeInMsRef = React.useRef<number | null>(null);
 
   const canBeSelected =
     (!seat.isSecurity && (!isUnavailable || allowSelectUnavailableSeats)) ||
@@ -55,9 +56,6 @@ export const SeatMapSeat: React.FC<Props> = ({
           !canBeSelected && "opacity-30",
           seat.hasRestrictedView && "border-4 border-orange-300"
         )}
-        onPointerDownCapture={() => {
-          pointerDownTimeInMsRef.current = Date.now();
-        }}
         onClick={(event) => {
           if (!pointerDownTimeInMsRef.current) {
             return;

@@ -10,6 +10,7 @@ interface Props {
   unavailableSeatsIdSet: Set<string>;
   onSeatToggle: (seat: Seat, isSelected: boolean) => void;
   allowSelectUnavailableSeats?: boolean;
+  pointerDownTimeInMsRef: React.MutableRefObject<number | null>;
 }
 
 export const SeatMapSection = React.memo(function SeatMapSection({
@@ -17,6 +18,7 @@ export const SeatMapSection = React.memo(function SeatMapSection({
   unavailableSeatsIdSet,
   onSeatToggle,
   allowSelectUnavailableSeats,
+  pointerDownTimeInMsRef,
 }: Props) {
   return (
     <div key={section.type} className="flex flex-col items-center gap-2">
@@ -47,6 +49,7 @@ export const SeatMapSection = React.memo(function SeatMapSection({
                     unavailableSeatsIdSet={unavailableSeatsIdSet}
                     allowSelectUnavailableSeats={allowSelectUnavailableSeats}
                     onSeatToggle={onSeatToggle}
+                    pointerDownTimeInMsRef={pointerDownTimeInMsRef}
                   />
                 );
               }
