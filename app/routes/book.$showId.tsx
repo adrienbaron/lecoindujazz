@@ -10,7 +10,7 @@ import {
 } from "@remix-run/react";
 import classNames from "classnames";
 import { and, eq, inArray } from "drizzle-orm";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { redirect } from "remix-typedjson";
 import { v4 as uuidv4 } from "uuid";
 
@@ -189,6 +189,26 @@ export default function Book() {
     revalidator.revalidate();
   }, [revalidator]);
   useOnFocus(revalidate);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+
+    const interval = setInterval(revalidate, 5_000);
+    return () => clearInterval(interval);
+  }, [isAdmin, revalidate]);
+
+  useEffect(
+    function revalidateOnReconnect() {
+      function onReconnect() {
+        revalidate();
+      }
+      window.addEventListener("online", onReconnect);
+      return () => window.removeEventListener("online", onReconnect);
+    },
+    [revalidate]
+  );
 
   const navigation = useNavigation();
   return (
