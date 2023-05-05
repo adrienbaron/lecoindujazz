@@ -34,7 +34,7 @@ export const SeatMapSeat: React.FC<Props> = ({
         type="checkbox"
         name="seat"
         id={seat.id}
-        value={seat.id}
+        value={`${isUnavailable ? "unavailable" : "available"}:${seat.id}`}
         disabled={!canBeSelected}
         className="peer absolute h-0 w-0 opacity-0"
         onChange={(e) => {

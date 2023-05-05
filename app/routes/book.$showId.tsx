@@ -2,6 +2,7 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/cloudflare";
 import { json } from "@remix-run/cloudflare";
 import {
   Form,
+  useActionData,
   useLoaderData,
   useNavigation,
   useParams,
@@ -24,6 +25,7 @@ import {
   sectionTypeToTitle,
 } from "~/models/seatMap";
 import { showByIdMap, showToHumanString } from "~/models/shows";
+import type { SeatIdWithStatus } from "~/services/db.service.server";
 import {
   adminLockAndUnlockSeats,
   getAllUnavailableSeatsForShow,
@@ -74,13 +76,29 @@ export const action = async ({
   const sessionId = session.get("sessionId");
 
   const formData = await request.formData();
-  const selectedSeatsId = formData.getAll("seat") as string[];
+  const seatIdsWithStatusStrings = formData.getAll("seat") as string[];
+  const selectedSeatIdsWithStatus = seatIdsWithStatusStrings.map(
+    (seatIdWithStatus): SeatIdWithStatus => {
+      const [status, seatId] = seatIdWithStatus.split(":");
+      return { seatId, status: status as SeatIdWithStatus["status"] };
+    }
+  );
+  const selectedSeatsId = selectedSeatIdsWithStatus.map((s) => s.seatId);
 
   const db = getDbFromContext(context);
 
   const isAdmin = session.get("isAdmin");
   if (isAdmin) {
-    await adminLockAndUnlockSeats(db, showId, selectedSeatsId);
+    const { success } = await adminLockAndUnlockSeats(
+      db,
+      showId,
+      selectedSeatIdsWithStatus
+    );
+
+    if (!success) {
+      return json({ success: false, reason: "STATE_CHANGED" }, { status: 400 });
+    }
+
     return json({ success: true });
   }
 
@@ -158,6 +176,7 @@ export default function Book() {
 
   const selectedSeatsSet = new Set(selectedSeats.map((seat) => seat.id));
   if (
+    !isAdmin &&
     allUnavailableSeats
       .filter((seat) => seat.showId === showId)
       .some((seat) => selectedSeatsSet.has(seat.seatId))
@@ -167,6 +186,17 @@ export default function Book() {
       "Certains sieges ont été reservés par un autre utilisateur, votre séléction a été réinitialisée";
     setSelectedSeats([]);
   }
+
+  const { success, reason } =
+    useActionData<{ success: boolean; reason: string }>() ?? {};
+  useEffect(() => {
+    if (success === false && reason === "STATE_CHANGED") {
+      formKeyRef.current = Date.now();
+      infoMessageRef.current =
+        "Certains sieges ont été reservés par un autre utilisateur, votre séléction a été réinitialisée";
+      setSelectedSeats([]);
+    }
+  }, [success, reason]);
 
   const onSeatToggle = useCallback((seat: Seat, isSelected: boolean) => {
     infoMessageRef.current = null;
@@ -215,7 +245,6 @@ export default function Book() {
     <Form
       className="grid w-full grid-rows-[85vh_0] lg:grid-cols-[auto_300px] lg:grid-rows-none"
       method="POST"
-      reloadDocument={isAdmin}
     >
       <div className="flex flex-col gap-2 overflow-hidden">
         <div className="px-4 py-2">

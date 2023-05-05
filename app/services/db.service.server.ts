@@ -144,15 +144,30 @@ export async function registerPurchase(
     .run();
 }
 
+export interface SeatIdWithStatus {
+  seatId: string;
+  status: "available" | "unavailable";
+}
+
 export const adminLockAndUnlockSeats = async (
   db: DrizzleD1Database,
   showId: string,
-  selectedSeatsId: string[]
-): Promise<void> => {
+  selectedSeatsIdWithStatuses: SeatIdWithStatus[]
+): Promise<{ success: boolean }> => {
   const [lockedSeats, purchasedSeats] = await Promise.all([
     getLockedSeatsForShow(db, showId),
     getPurchasedSeatsForShow(db, showId),
   ]);
+
+  const selectedSeatsId = selectedSeatsIdWithStatuses.map(
+    (selectedSeat) => selectedSeat.seatId
+  );
+  const seatIdToStatusMap = new Map(
+    selectedSeatsIdWithStatuses.map((selectedSeat) => [
+      selectedSeat.seatId,
+      selectedSeat.status,
+    ])
+  );
 
   const lockedSeatsIdSet = new Set(lockedSeats.map((seat) => seat.seatId));
   const purchasedSeatsMap = new Map(
@@ -170,6 +185,22 @@ export const adminLockAndUnlockSeats = async (
       !lockedSeatsIdSet.has(selectedSeatId) &&
       !purchasedSeatsMap.has(selectedSeatId)
   );
+
+  if (
+    [...lockedSeatsToUnlock, ...purchasedSeatsToUnlock].some(
+      (seatId) => seatIdToStatusMap.get(seatId) === "available"
+    )
+  ) {
+    return { success: false };
+  }
+
+  if (
+    seatsToMarkAsPurchased.some(
+      (seatId) => seatIdToStatusMap.get(seatId) === "unavailable"
+    )
+  ) {
+    return { success: false };
+  }
 
   const adminPurchaseId = `ADMIN:${uuidv4()}`;
   if (seatsToMarkAsPurchased.length > 0) {
@@ -229,6 +260,8 @@ export const adminLockAndUnlockSeats = async (
         )
         .run(),
   ]);
+
+  return { success: true };
 };
 
 export const unlockSeat = async (
