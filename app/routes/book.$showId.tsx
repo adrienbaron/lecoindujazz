@@ -18,7 +18,7 @@ import { SeatMap } from "~/components/seatMap/seatMap";
 import { lockedSeatsTable } from "~/models/dbSchema";
 import type { Seat } from "~/models/seatMap";
 import {
-  PRICE_PER_SEAT_IN_CENTS,
+  getSeatPrice,
   seatToHumanString,
   sectionTypeToTitle,
 } from "~/models/seatMap";
@@ -229,9 +229,7 @@ export default function Book() {
                       </span>
                     )}
                   </div>
-                  {!isAdmin && (
-                    <span>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</span>
-                  )}
+                  {!isAdmin && <span>{formatPrice(getSeatPrice(seat))}</span>}
                   {isAdmin &&
                     (unavailableSeatForSelectedSeat ? (
                       <span className="text-success">Débloquer</span>

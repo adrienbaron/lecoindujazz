@@ -16,7 +16,7 @@ import { lockedSeatsTable } from "~/models/dbSchema";
 import type { Seat } from "~/models/seatMap";
 import {
   getSeatByIdMap,
-  PRICE_PER_SEAT_IN_CENTS,
+  getSeatPrice,
   seatSectionsOrder,
   seatToHumanString,
   sectionTypeToTitle,
@@ -94,7 +94,7 @@ export const action = async ({ context, request }: ActionArgs) => {
       return {
         quantity: 1,
         price_data: {
-          unit_amount: PRICE_PER_SEAT_IN_CENTS,
+          unit_amount: getSeatPrice(seat),
           product_data: {
             name: `${sectionTypeToTitle[seat.sectionType]} ${seatToHumanString(
               seat
@@ -173,8 +173,14 @@ export default function Basket() {
     });
   });
 
-  const totalPriceInCents =
-    PRICE_PER_SEAT_IN_CENTS * lockedSeatsForSession.length;
+  const totalPriceInCents = lockedSeatsForSession.reduce((acc, seatLock) => {
+    const seat = seatById.get(seatLock.seatId);
+    if (!seat) {
+      throw new Error(`Seat not found for id ${seatLock.seatId}`);
+    }
+
+    return acc + getSeatPrice(seat);
+  }, 0);
 
   const [expiresInSeconds, setExpiresInSeconds] = useState(() => {
     return sessionToExpireInSeconds(lockedSeatsForSession);
@@ -233,7 +239,7 @@ export default function Basket() {
                           {sectionTypeToTitle[seat.sectionType]}{" "}
                           {seatToHumanString(seat)}
                         </span>
-                        <strong>{formatPrice(PRICE_PER_SEAT_IN_CENTS)}</strong>
+                        <strong>{formatPrice(getSeatPrice(seat))}</strong>
                       </div>
                       <button
                         className={classNames(

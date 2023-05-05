@@ -35,6 +35,21 @@ export const seatToHumanString = ({
   }${isWheelchairAccessible ? " (PMR)" : ""}`;
 };
 
+export const getSeatPrice = (seat: Seat) => {
+  if (seat.isWheelchairAccessible) {
+    return 5_50;
+  }
+
+  switch (seat.sectionType) {
+    case "ORCHESTRA":
+    case "FIRST_GALLERY":
+    case "SECOND_GALLERY":
+      return seat.hasRestrictedView ? 8_50 : 10_50;
+    case "THIRD_GALLERY":
+      return seat.hasRestrictedView ? 6_50 : 8_50;
+  }
+};
+
 export interface UnavailableSeat {
   showId: string;
   seatId: string;
