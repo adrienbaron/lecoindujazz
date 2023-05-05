@@ -96,10 +96,13 @@ export const action = async ({
     );
 
     if (!success) {
-      return json({ success: false, reason: "STATE_CHANGED" }, { status: 400 });
+      return json(
+        { success: false, reason: "STATE_CHANGED", dateTime: Date.now() },
+        { status: 400 }
+      );
     }
 
-    return json({ success: true });
+    return json({ success: true, dateTime: Date.now() });
   }
 
   const seatLocks = await db
@@ -187,16 +190,26 @@ export default function Book() {
     setSelectedSeats([]);
   }
 
-  const { success, reason } =
-    useActionData<{ success: boolean; reason: string }>() ?? {};
+  const { success, reason, dateTime } =
+    useActionData<{ success: boolean; reason: string; dateTime: number }>() ??
+    {};
+
+  const navigation = useNavigation();
   useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+
     if (success === false && reason === "STATE_CHANGED") {
       formKeyRef.current = Date.now();
       infoMessageRef.current =
         "Certains sieges ont été reservés par un autre utilisateur, votre séléction a été réinitialisée";
       setSelectedSeats([]);
+    } else if (success === true) {
+      formKeyRef.current = Date.now();
+      setSelectedSeats([]);
     }
-  }, [success, reason]);
+  }, [success, reason, dateTime, isAdmin]);
 
   const onSeatToggle = useCallback((seat: Seat, isSelected: boolean) => {
     infoMessageRef.current = null;
@@ -240,7 +253,6 @@ export default function Book() {
     [revalidate]
   );
 
-  const navigation = useNavigation();
   return (
     <Form
       className="grid w-full grid-rows-[85vh_0] lg:grid-cols-[auto_300px] lg:grid-rows-none"
