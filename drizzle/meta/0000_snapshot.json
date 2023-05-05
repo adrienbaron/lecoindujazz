@@ -1,0 +1,147 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "id": "5ef799a1-f177-4e8d-82b5-d1fc4c7042c6",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "locked_seats": {
+      "name": "locked_seats",
+      "columns": {
+        "show_id": {
+          "name": "show_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seat_id": {
+          "name": "seat_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locked_session_id": {
+          "name": "locked_session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locked_until": {
+          "name": "locked_until",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "stripe_checkout_session_id": {
+          "name": "stripe_checkout_session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "stripeCheckoutSessionId": {
+          "name": "stripeCheckoutSessionId",
+          "columns": [
+            "stripe_checkout_session_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "locked_seats_show_id_seat_id_pk": {
+          "columns": [
+            "show_id",
+            "seat_id"
+          ]
+        }
+      }
+    },
+    "purchases": {
+      "name": "purchases",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {}
+    },
+    "purchased_seats": {
+      "name": "purchased_seats",
+      "columns": {
+        "show_id": {
+          "name": "show_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seat_id": {
+          "name": "seat_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchase_id": {
+          "name": "purchase_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "purchaseIdIdx": {
+          "name": "purchaseIdIdx",
+          "columns": [
+            "purchase_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "purchased_seats_purchase_id_purchases_id_fk": {
+          "name": "purchased_seats_purchase_id_purchases_id_fk",
+          "tableFrom": "purchased_seats",
+          "tableTo": "purchases",
+          "columnsFrom": [
+            "purchase_id"
+          ],
+          "columnsTo": [
+            "id"
+          ]
+        }
+      },
+      "compositePrimaryKeys": {
+        "purchased_seats_show_id_seat_id_pk": {
+          "columns": [
+            "show_id",
+            "seat_id"
+          ]
+        }
+      }
+    }
+  },
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}
