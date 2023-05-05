@@ -74,6 +74,11 @@ const Layout: React.FC<LayoutProps> = ({ isAdmin, headerItems, children }) => (
       <ScrollRestoration />
       <Scripts />
       <LiveReload />
+      <script
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon='{"token": "1334d00fe7044e12ace4e4881fb419f8"}'
+      ></script>
     </body>
   </html>
 );
