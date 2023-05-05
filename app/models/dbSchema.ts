@@ -36,6 +36,7 @@ export const lockedSeatsTable = sqliteTable(
     sessionId: text("locked_session_id").notNull(),
     lockedUntil: integer("locked_until", { mode: "timestamp" }).notNull(),
     stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    hasChildOnLap: integer("has_child_on_lap"),
   },
   (seatsLockTable) => ({
     compositePk: primaryKey(seatsLockTable.showId, seatsLockTable.seatId),

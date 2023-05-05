@@ -8,6 +8,13 @@
       "when": 1683046263068,
       "tag": "0000_normal_lady_deathstrike",
       "breakpoints": false
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1683311334954,
+      "tag": "0001_confused_green_goblin",
+      "breakpoints": false
     }
   ]
 }

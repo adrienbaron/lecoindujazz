@@ -14,8 +14,6 @@ export type Seat = {
   sectionType: SeatSectionType;
 } & SeatAttributes;
 
-export const PRICE_PER_SEAT_IN_CENTS = 1050;
-
 export const sectionTypeToTitle: Record<SeatSectionType, string> = {
   ORCHESTRA: "Orchestre",
   FIRST_GALLERY: "Première galerie",

@@ -9,7 +9,7 @@ import { useTypedRouteLoaderData } from "remix-typedjson";
 import Stripe from "stripe";
 import { z } from "zod";
 
-import { TrashIcon, WarningIcon } from "~/components/icons";
+import { BearIcon, TrashIcon, WarningIcon } from "~/components/icons";
 import { calaisTheatreAllSections } from "~/models/calaisTheatreSeatingPlan";
 import type { LockedSeatModel } from "~/models/dbSchema";
 import { lockedSeatsTable } from "~/models/dbSchema";
@@ -25,15 +25,18 @@ import { showByIdMap, showToHumanString } from "~/models/shows";
 import {
   getDbFromContext,
   getLockedSeatsForSession,
+  setSeatLockHasChild,
   unlockSeat,
 } from "~/services/db.service.server";
 import { getSessionStorage } from "~/session";
 import { formatPrice } from "~/utils/price";
 
-const deleteSeatDataSchema = z.object({
+const seatLockReferenceSchema = z.object({
   showId: z.string(),
   seatId: z.string(),
 });
+
+const childOnLapsPriceInCents = 5_50;
 
 export const action = async ({ context, request }: ActionArgs) => {
   if (!context.IS_OPEN) {
@@ -56,19 +59,38 @@ export const action = async ({ context, request }: ActionArgs) => {
   const formData = await request.formData();
   const deleteSeatData = formData.get("delete");
   if (deleteSeatData) {
-    const seatToDelete = deleteSeatDataSchema.parse(
+    const seatToDelete = seatLockReferenceSchema.parse(
       JSON.parse(deleteSeatData as string)
     );
-    const hasSeatToDeleteInSession = lockedSeatsForSession.some(
-      (seatLock) =>
-        seatLock.showId === seatToDelete.showId &&
-        seatLock.seatId === seatToDelete.seatId
-    );
-    if (!hasSeatToDeleteInSession) {
-      throw new Error("Seat not found in session");
-    }
-
     await unlockSeat(db, seatToDelete.showId, seatToDelete.seatId);
+    return json({ success: true });
+  }
+
+  const addChildData = formData.get("add-child");
+  if (addChildData) {
+    const seatToAddChildTo = seatLockReferenceSchema.parse(
+      JSON.parse(addChildData as string)
+    );
+    await setSeatLockHasChild(
+      db,
+      seatToAddChildTo.showId,
+      seatToAddChildTo.seatId,
+      true
+    );
+    return json({ success: true });
+  }
+
+  const removeChildData = formData.get("remove-child");
+  if (removeChildData) {
+    const seatToRemoveChildFrom = seatLockReferenceSchema.parse(
+      JSON.parse(removeChildData as string)
+    );
+    await setSeatLockHasChild(
+      db,
+      seatToRemoveChildFrom.showId,
+      seatToRemoveChildFrom.seatId,
+      false
+    );
     return json({ success: true });
   }
 
@@ -94,11 +116,13 @@ export const action = async ({ context, request }: ActionArgs) => {
       return {
         quantity: 1,
         price_data: {
-          unit_amount: getSeatPrice(seat),
+          unit_amount:
+            getSeatPrice(seat) +
+            (seatLock.hasChildOnLap ? childOnLapsPriceInCents : 0),
           product_data: {
             name: `${sectionTypeToTitle[seat.sectionType]} ${seatToHumanString(
               seat
-            )}`,
+            )} ${seatLock.hasChildOnLap ? "(+ Enfant -4 ans)" : ""}`,
             description: `${showToHumanString(show)}`,
           },
           currency: "EUR",
@@ -160,6 +184,10 @@ export default function Basket() {
     return acc;
   }, new Map<string, Seat[]>());
 
+  const lockedSeatMap = new Map<string, LockedSeatModel>(
+    lockedSeatsForSession.map((seatLock) => [seatLock.seatId, seatLock])
+  );
+
   [...seatsPerShow.values()].forEach((seats) => {
     seats.sort((a, b) => {
       const sectionOrder =
@@ -179,7 +207,11 @@ export default function Basket() {
       throw new Error(`Seat not found for id ${seatLock.seatId}`);
     }
 
-    return acc + getSeatPrice(seat);
+    return (
+      acc +
+      getSeatPrice(seat) +
+      (seatLock.hasChildOnLap ? childOnLapsPriceInCents : 0)
+    );
   }, 0);
 
   const [expiresInSeconds, setExpiresInSeconds] = useState(() => {
@@ -218,41 +250,108 @@ export default function Basket() {
           }
 
           return (
-            <div key={showId} className="flex flex-col gap-2">
-              <h2 className="font-medium fluid-lg">
-                {showToHumanString(show)}
-              </h2>
+            <div key={showId} className="flex flex-col">
+              <div className="flex flex-col gap-2">
+                <h2 className="font-medium fluid-lg">
+                  {showToHumanString(show)}
+                </h2>
+                <p className="flex items-center justify-start gap-2">
+                  <div className="bg-success p-1 text-success-content">
+                    <BearIcon className="h-4 w-4" />
+                  </div>
+                  <span>
+                    Seul les enfants de -4 ans sur les genoux sont accepté
+                  </span>
+                </p>
+              </div>
               <ul className="flex flex-col divide-y divide-base-300">
                 {showSeats.map((seat) => {
-                  const deleteValue = JSON.stringify({
+                  const seatLockReference = JSON.stringify({
                     showId,
                     seatId: seat.id,
                   });
                   const isDeletingSeat =
                     navigation.state !== "idle" &&
-                    navigation.formData?.get("delete") === deleteValue;
+                    navigation.formData?.get("delete") === seatLockReference;
+                  const isAddingChild =
+                    navigation.state !== "idle" &&
+                    navigation.formData?.get("add-child") === seatLockReference;
+                  const isRemovingChild =
+                    navigation.state !== "idle" &&
+                    navigation.formData?.get("remove-child") ===
+                      seatLockReference;
+
+                  const hasChildOnLap = lockedSeatMap.get(
+                    seat.id
+                  )?.hasChildOnLap;
 
                   return (
                     <li key={seat.id} className="flex flex-col gap-2 py-4">
                       <div className="flex justify-between">
-                        <span>
-                          {sectionTypeToTitle[seat.sectionType]}{" "}
-                          {seatToHumanString(seat)}
-                        </span>
-                        <strong>{formatPrice(getSeatPrice(seat))}</strong>
+                        <div className="flex flex-col gap-2">
+                          <span>
+                            {sectionTypeToTitle[seat.sectionType]}{" "}
+                            {seatToHumanString(seat)}
+                          </span>
+                          <div className="flex flex-col gap-2 md:flex-row">
+                            {!hasChildOnLap && (
+                              <button
+                                className={classNames(
+                                  "btn-xs btn btn-success gap-1 self-start normal-case",
+                                  isAddingChild && "loading"
+                                )}
+                                disabled={navigation.state !== "idle"}
+                                name="add-child"
+                                value={seatLockReference}
+                              >
+                                {!isAddingChild && (
+                                  <BearIcon className="h-4 w-4" />
+                                )}{" "}
+                                Ajouter un Enfant ({formatPrice(5_50)})
+                              </button>
+                            )}
+                            {!!hasChildOnLap && (
+                              <button
+                                className={classNames(
+                                  "btn-xs btn btn-error gap-1 self-start normal-case",
+                                  isRemovingChild && "loading"
+                                )}
+                                disabled={navigation.state !== "idle"}
+                                name="remove-child"
+                                value={seatLockReference}
+                              >
+                                {!isRemovingChild && (
+                                  <BearIcon className="h-4 w-4" />
+                                )}{" "}
+                                Retirer l&rsquo;Enfant
+                              </button>
+                            )}
+                            <button
+                              className={classNames(
+                                "btn-xs btn gap-1 self-start normal-case",
+                                isDeletingSeat && "loading"
+                              )}
+                              disabled={navigation.state !== "idle"}
+                              name="delete"
+                              value={seatLockReference}
+                            >
+                              {!isDeletingSeat && (
+                                <TrashIcon className="h-4 w-4" />
+                              )}{" "}
+                              Retirer du panier
+                            </button>
+                          </div>
+                        </div>
+                        <strong className="flex flex-col items-end">
+                          <span>{formatPrice(getSeatPrice(seat))}</span>
+                          {!!hasChildOnLap && (
+                            <span className="flex text-xs text-warning">
+                              +<BearIcon className="h-4 w-4" />{" "}
+                              {formatPrice(childOnLapsPriceInCents)}
+                            </span>
+                          )}
+                        </strong>
                       </div>
-                      <button
-                        className={classNames(
-                          "btn-xs btn gap-1 self-start normal-case",
-                          isDeletingSeat && "loading"
-                        )}
-                        disabled={navigation.state !== "idle"}
-                        name="delete"
-                        value={deleteValue}
-                      >
-                        {!isDeletingSeat && <TrashIcon className="h-4 w-4" />}{" "}
-                        Retirer du panier
-                      </button>
                     </li>
                   );
                 })}

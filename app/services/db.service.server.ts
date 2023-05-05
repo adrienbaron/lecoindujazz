@@ -245,3 +245,20 @@ export const unlockSeat = async (
       )
     )
     .run();
+
+export const setSeatLockHasChild = async (
+  db: DrizzleD1Database,
+  showId: string,
+  seatId: string,
+  hasChild: boolean
+) =>
+  db
+    .update(lockedSeatsTable)
+    .set({ hasChildOnLap: hasChild ? 1 : 0 })
+    .where(
+      and(
+        eq(lockedSeatsTable.showId, showId),
+        eq(lockedSeatsTable.seatId, seatId)
+      )
+    )
+    .run();
