@@ -178,7 +178,7 @@ export default function Book() {
     >
       <div className="flex flex-col gap-2 overflow-hidden p-2 md:p-4 lg:px-6">
         <h1 className="fluid-2xl">{showToHumanString(show)}</h1>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
           <div className="flex items-center gap-1 text-sm">
             <div className="h-4 w-4 bg-green-700" />
             <span>Disponible</span>
@@ -190,6 +190,10 @@ export default function Book() {
           <div className="flex items-center gap-1 text-sm">
             <div className="h-4 w-4 bg-blue-300" />
             <span>PMR</span>
+          </div>
+          <div className="flex items-center gap-1 text-sm">
+            <div className="bg-green-700 px-1 text-xs font-medium">bis</div>
+            <span>Strapontin</span>
           </div>
         </div>
         <SeatMap
