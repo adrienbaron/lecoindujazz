@@ -53,6 +53,8 @@ export const action: ActionFunction = async ({ context, request }) => {
         name: session.customer_details.name,
         email: session.customer_details.email,
       });
+
+      console.log(`[action][${session.id}] completed purchase`);
     } catch (err) {
       console.error(err);
       return json({ error: err, reason: "DB_ERROR" }, { status: 500 });

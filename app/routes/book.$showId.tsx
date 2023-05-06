@@ -157,6 +157,10 @@ export const action = async ({
     )
     .run();
 
+  console.log(
+    `[action][${sessionId}] locked seats: `,
+    JSON.stringify(selectedSeatsId)
+  );
   return redirect("/basket");
 };
 

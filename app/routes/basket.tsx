@@ -63,6 +63,8 @@ export const action = async ({ context, request }: ActionArgs) => {
       JSON.parse(deleteSeatData as string)
     );
     await unlockSeat(db, seatToDelete.showId, seatToDelete.seatId);
+
+    console.log(`[action][${sessionId}] removed seat: `, seatToDelete.seatId);
     return json({ success: true });
   }
 
@@ -77,6 +79,11 @@ export const action = async ({ context, request }: ActionArgs) => {
       seatToAddChildTo.seatId,
       true
     );
+
+    console.log(
+      `[action][${sessionId}] added child to seat: `,
+      seatToAddChildTo.seatId
+    );
     return json({ success: true });
   }
 
@@ -90,6 +97,11 @@ export const action = async ({ context, request }: ActionArgs) => {
       seatToRemoveChildFrom.showId,
       seatToRemoveChildFrom.seatId,
       false
+    );
+
+    console.log(
+      `[action][${sessionId}] removed child from seat: `,
+      seatToRemoveChildFrom.seatId
     );
     return json({ success: true });
   }
@@ -146,6 +158,12 @@ export const action = async ({ context, request }: ActionArgs) => {
     .where(eq(lockedSeatsTable.sessionId, sessionId))
     .run();
 
+  console.log(
+    `[action][${sessionId}] confirmed basket: `,
+    JSON.stringify(lockedSeatsForSession.map((s) => s.seatId)),
+    "stripeSessionId: ",
+    stripeSession.id
+  );
   return redirect(stripeSession.url);
 };
 
