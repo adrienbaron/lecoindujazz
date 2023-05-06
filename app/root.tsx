@@ -150,6 +150,12 @@ export function ErrorBoundary() {
               <p>Merci de contacter le support</p>
             </>
           )}
+          <div className="flex flex-col gap-4 text-center">
+            <p className="fluid-lg">Votre panier est vide</p>
+            <Link to={"/"} className="btn-primary btn self-center">
+              Retour à l&apos;accueil
+            </Link>
+          </div>
         </div>
       </Layout>
     );
@@ -166,6 +172,12 @@ export function ErrorBoundary() {
         <h1 className="fluid-2xl">Une erreur est survenue</h1>
         <p>Merci de contacter le support avec cette erreur:</p>
         <pre>{errorMessage}</pre>
+        <div className="flex flex-col gap-4 text-center">
+          <p className="fluid-lg">Votre panier est vide</p>
+          <Link to={"/"} className="btn-primary btn self-center">
+            Retour à l&apos;accueil
+          </Link>
+        </div>
       </div>
     </Layout>
   );
