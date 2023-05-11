@@ -71,6 +71,15 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
           <div className="flex-none">{headerItems}</div>
         </header>
+        {!shouldIndex && (
+          <div className="bg-red-950 p-4 text-center">
+            Site de test! Aucune réservation n&apos;est réelle. Pour le vrai
+            site,{" "}
+            <a href="https://billetteries.lecoindujazz.com/" className="link">
+              cliquez ici
+            </a>
+          </div>
+        )}
         <main>{children}</main>
       </div>
       <footer className="footer flex justify-end bg-base-200 p-8">
