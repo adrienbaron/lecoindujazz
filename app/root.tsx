@@ -39,15 +39,22 @@ export const meta: MetaFunction = () => ({
 });
 
 interface LayoutProps extends PropsWithChildren {
+  shouldIndex: boolean;
   isAdmin?: boolean;
   headerItems?: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ isAdmin, headerItems, children }) => (
+const Layout: React.FC<LayoutProps> = ({
+  isAdmin,
+  shouldIndex,
+  headerItems,
+  children,
+}) => (
   <html lang="en">
     <head>
       <Meta />
       <Links />
+      {!shouldIndex && <meta name="robots" content="noindex" />}
     </head>
     <body>
       <div className="min-h-screen">
@@ -100,6 +107,7 @@ export const loader = async ({ context, request }: LoaderArgs) => {
       lockedSeatsForSession,
       isAdmin: session.get("isAdmin"),
       isBookingOpen: context.IS_OPEN === "true",
+      isProduction: context.IS_PRODUCTION === "true",
     },
     {
       headers: await getSetCookieHeader(context, session),
@@ -108,14 +116,16 @@ export const loader = async ({ context, request }: LoaderArgs) => {
 };
 
 export default function App() {
-  const { lockedSeatsForSession, isAdmin } = useTypedLoaderData<{
+  const { lockedSeatsForSession, isAdmin, isProduction } = useTypedLoaderData<{
     lockedSeatsForSession: LockedSeatModel[];
     isAdmin: boolean;
+    isProduction: boolean;
   }>();
 
   return (
     <Layout
       isAdmin={isAdmin}
+      shouldIndex={isProduction}
       headerItems={
         <>
           {!isAdmin && (
@@ -140,7 +150,7 @@ export function ErrorBoundary() {
 
   if (isRouteErrorResponse(error)) {
     return (
-      <Layout>
+      <Layout shouldIndex={false}>
         <div className="flex flex-col items-center gap-2 p-2">
           {error.status === 404 ? (
             <h1 className="fluid-2xl">404 - Page non trouvée</h1>
@@ -167,7 +177,7 @@ export function ErrorBoundary() {
   }
 
   return (
-    <Layout>
+    <Layout shouldIndex={false}>
       <div className="flex flex-col items-center gap-2 p-2">
         <h1 className="fluid-2xl">Une erreur est survenue</h1>
         <p>Merci de contacter le support avec cette erreur:</p>
