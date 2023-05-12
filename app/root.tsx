@@ -72,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="flex-none">{headerItems}</div>
         </header>
         {!shouldIndex && (
-          <div className="bg-red-950 p-4 text-center">
+          <div className="bg-red-600 p-4 text-center">
             Site de test! Aucune réservation n&apos;est réelle. Pour le vrai
             site,{" "}
             <a href="https://billetteries.lecoindujazz.com/" className="link">
