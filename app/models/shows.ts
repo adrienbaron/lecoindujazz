@@ -6,19 +6,24 @@ interface Show {
 
 export const shows: Show[] = [
   {
-    id: "2023-06-24_12-00-00",
-    title: "Enfants I AM 2",
-    datetime: new Date("2023-06-24T12:00:00.000Z"),
+    id: "2024-06-22_12-00-00",
+    title: 'Spectacle Enfants "BLOSSOM"',
+    datetime: new Date("2024-06-22T12:00:00.000Z"),
   },
   {
-    id: "2023-06-24_15-00-00",
-    title: "Enfants I AM 2",
-    datetime: new Date("2023-06-24T15:00:00.000Z"),
+    id: "2024-06-22_15-00-00",
+    title: 'Spectacle Enfants "BLOSSOM"',
+    datetime: new Date("2024-06-22T15:00:00.000Z"),
   },
   {
-    id: "2023-06-24_19-00-00",
-    title: "Adultes I AM 2",
-    datetime: new Date("2023-06-24T19:00:00.000Z"),
+    id: "2024-06-22_19-00-00",
+    title: 'Spectacle Adultes "BLOSSOM"',
+    datetime: new Date("2024-06-22T19:00:00.000Z"),
+  },
+  {
+    id: "2024-06-21_19-00-00",
+    title: 'Spectacle Adultes "BLOSSOM"',
+    datetime: new Date("2024-06-21T19:00:00.000Z"),
   },
 ];
 

@@ -35,16 +35,16 @@ export const seatToHumanString = ({
 
 export const getSeatPrice = (seat: Seat) => {
   if (seat.isWheelchairAccessible) {
-    return 5_50;
+    return 6_00;
   }
 
   switch (seat.sectionType) {
     case "ORCHESTRA":
     case "FIRST_GALLERY":
     case "SECOND_GALLERY":
-      return seat.hasRestrictedView ? 8_50 : 10_50;
+      return seat.hasRestrictedView ? 9_00 : 11_00;
     case "THIRD_GALLERY":
-      return seat.hasRestrictedView ? 6_50 : 8_50;
+      return seat.hasRestrictedView ? 7_00 : 9_00;
   }
 };
 

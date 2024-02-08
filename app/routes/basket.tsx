@@ -36,7 +36,7 @@ const seatLockReferenceSchema = z.object({
   seatId: z.string(),
 });
 
-const childOnLapsPriceInCents = 5_50;
+const childOnLapsPriceInCents = 6_00;
 
 export const action = async ({ context, request }: ActionArgs) => {
   if (!context.IS_OPEN) {
@@ -326,7 +326,8 @@ export default function Basket() {
                                 {!isAddingChild && (
                                   <BearIcon className="h-4 w-4" />
                                 )}{" "}
-                                Ajouter un Enfant ({formatPrice(5_50)})
+                                Ajouter un Enfant (
+                                {formatPrice(childOnLapsPriceInCents)})
                               </button>
                             )}
                             {!!hasChildOnLap && (
