@@ -21,6 +21,11 @@ export default function Index() {
             <span>
               Merci de votre achat! Vous recevrez un email de confirmation dans
               quelques minutes.
+              <br />
+              <strong>
+                L'email de confirmation est votre billet. Présentez-le à
+                l'entrée du spectacle.
+              </strong>
             </span>
           </div>
         </div>
