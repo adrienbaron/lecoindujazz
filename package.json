@@ -6,10 +6,12 @@
     "build": "react-router build",
     "cf-typegen": "wrangler types",
     "deploy": "pnpm run build && wrangler deploy",
+    "deploy:staging": "CLOUDFLARE_ENV=staging pnpm run build && wrangler deploy",
     "dev": "react-router dev",
     "preview": "pnpm run build && vite preview",
     "typecheck": "npm run cf-typegen && react-router typegen && tsc -b",
-    "db:migrations:local": "wrangler d1 migrations apply lecoindujazz --local"
+    "db:migrations:local": "wrangler d1 migrations apply lecoindujazz --local",
+    "db:migrations:staging": "wrangler d1 migrations apply lecoindujazz-dev-new --env staging"
   },
   "dependencies": {
     "@mdi/js": "^7.2.96",

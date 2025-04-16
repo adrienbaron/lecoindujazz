@@ -8,13 +8,16 @@
 	"compatibility_date": "2025-04-04",
 	"main": "./workers/app.ts",
 	"vars": {
-		"IS_OPEN": "true"
+		"IS_OPEN": "false"
 	},
 	"observability": {
 		"enabled": true
 	},
 	"env": {
 		"staging": {
+			"vars": {
+				"IS_OPEN": "true"
+			},
 			"d1_databases": [
 				{
 					"binding": "DB",
@@ -71,4 +74,4 @@
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
 	 */
 	// "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
-},
+}

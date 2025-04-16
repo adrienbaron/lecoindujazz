@@ -1,6 +1,6 @@
 import styles from "./tailwind.css?url";
 
-import { type LoaderFunctionArgs, data } from "react-router";
+import { type LoaderFunctionArgs, data, MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import classNames from "classnames";
 import React from "react";
@@ -21,6 +21,13 @@ import {
 } from "./services/db.service.server";
 import { getSessionStorage, getSetCookieHeader } from "./session";
 import { nanoid } from "nanoid";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    { title: "Le Coin Du Jazz" },
+    data?.isProduction ? {} : { property: "robots", content: "noindex" },
+  ];
+};
 
 export const links: Route.LinksFunction = () => [
   { rel: "stylesheet", href: styles },
