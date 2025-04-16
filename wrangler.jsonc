@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "v2",
+	"name": "lecoindujazz",
 	"compatibility_date": "2025-04-04",
 	"main": "./workers/app.ts",
 	"vars": {
@@ -13,11 +13,24 @@
 	"observability": {
 		"enabled": true
 	},
+	"env": {
+		"staging": {
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "lecoindujazz-dev-new",
+					"database_id": "b72a8855-e4d8-4a64-982e-b5762425d89a",
+					"preview_database_id": "DB",
+					"migrations_dir": "drizzle"
+				}
+			]
+		}
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "lecoindujazz",
-			"database_id": "223a6cf6-cde5-44af-a3f4-32496824f993",
+			"database_name": "lecoindujazz-new",
+			"database_id": "fb60bb8f-d713-4826-b8a6-9544cba7ea7a",
 			"preview_database_id": "DB",
 			"migrations_dir": "drizzle"
 		}
@@ -58,4 +71,4 @@
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
 	 */
 	// "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
-}
+},
