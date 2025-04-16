@@ -8,7 +8,8 @@
 	"compatibility_date": "2025-04-04",
 	"main": "./workers/app.ts",
 	"vars": {
-		"IS_OPEN": "false"
+		"IS_OPEN": "false",
+		"IS_PRODUCTION": "true"
 	},
 	"observability": {
 		"enabled": true
@@ -16,7 +17,8 @@
 	"env": {
 		"staging": {
 			"vars": {
-				"IS_OPEN": "true"
+				"IS_OPEN": "true",
+				"IS_PRODUCTION": "false"
 			},
 			"d1_databases": [
 				{

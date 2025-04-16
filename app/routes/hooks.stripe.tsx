@@ -14,7 +14,7 @@ const envSchema = z.object({
 });
 
 export const action: ActionFunction = async ({ context, request }) => {
-  const parsedEnv = envSchema.safeParse(context);
+  const parsedEnv = envSchema.safeParse(context.cloudflare.env);
   if (!parsedEnv.success) {
     return data({ error: parsedEnv.error, reason: "NO_ENV" }, { status: 500 });
   }
