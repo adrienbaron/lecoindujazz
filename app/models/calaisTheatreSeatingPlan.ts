@@ -227,7 +227,7 @@ export const firstGallerySection = generateSeatSection("FIRST_GALLERY", [
     generateRowLabel(),
     ...addBisAtStart(
       addBisAtEnd(alternateSeats(14), { hasRestrictedView: true }),
-      { hasRestrictedView: true }
+      { hasRestrictedView: true },
     ),
     generateRowLabel(),
     generateCorridor(),
@@ -257,7 +257,7 @@ export const firstGallerySection = generateSeatSection("FIRST_GALLERY", [
     generateRowLabel(),
     ...addBisAtStart(
       addBisAtEnd(alternateSeats(12), { hasRestrictedView: true }),
-      { hasRestrictedView: true }
+      { hasRestrictedView: true },
     ),
     generateRowLabel(),
     ...generateEmptySpace(),
@@ -409,12 +409,12 @@ export const orchestraSection = generateSeatSection("ORCHESTRA", [
     letter: "N",
     seatsBefore: [
       ...generateEmptySpace(2),
-      ...seatsDecreasing(22, 16),
-      ...generateEmptySpace(),
+      ...seatsDecreasing(22, 20),
+      ...generateEmptySpace(3),
     ],
     seatsAfter: [
-      ...generateEmptySpace(),
-      ...seatsIncreasing(15, 21),
+      ...generateEmptySpace(3),
+      ...seatsIncreasing(19, 21),
       ...generateEmptySpace(2),
     ],
   }),

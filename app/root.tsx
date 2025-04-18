@@ -1,67 +1,106 @@
-import type {
-  LinksFunction,
-  LoaderArgs,
-  MetaFunction,
-} from "@remix-run/cloudflare";
+import styles from "./tailwind.css?url";
+
+import { type LoaderFunctionArgs, data, MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import classNames from "classnames";
+import React from "react";
 import {
   isRouteErrorResponse,
-  Link,
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
-  useRouteError,
-} from "@remix-run/react";
-import classNames from "classnames";
-import type { PropsWithChildren } from "react";
-import React from "react";
-import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { v4 as uuidv4 } from "uuid";
+} from "react-router";
 
-import type { LockedSeatModel } from "~/models/dbSchema";
+import type { Route } from "./+types/root";
+import type { LockedSeatModel } from "./models/dbSchema";
 import {
   getDbFromContext,
   getLockedSeatsForSession,
-} from "~/services/db.service.server";
-import { getSessionStorage, getSetCookieHeader } from "~/session";
+} from "./services/db.service.server";
+import { getSessionStorage, getSetCookieHeader } from "./session";
+import { nanoid } from "nanoid";
 
-import styles from "./tailwind.css";
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    { title: "Le Coin Du Jazz" },
+    data?.isProduction ? {} : { property: "robots", content: "noindex" },
+  ];
+};
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+export const links: Route.LinksFunction = () => [
+  { rel: "stylesheet", href: styles },
+  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  {
+    rel: "preconnect",
+    href: "https://fonts.gstatic.com",
+    crossOrigin: "anonymous",
+  },
+  {
+    rel: "stylesheet",
+    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+  },
+];
 
-export const meta: MetaFunction = () => ({
-  charset: "utf-8",
-  title: "Le Coin du jazz - Billetterie",
-  viewport: "width=device-width,initial-scale=1",
-  "theme-color": "#202021",
-});
-
-interface LayoutProps extends PropsWithChildren {
-  shouldIndex: boolean;
-  isAdmin?: boolean;
-  headerItems?: React.ReactNode;
+export function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#202021" />
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        {children}
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    </html>
+  );
 }
 
-const Layout: React.FC<LayoutProps> = ({
-  isAdmin,
-  shouldIndex,
-  headerItems,
-  children,
-}) => (
-  <html lang="en">
-    <head>
-      <Meta />
-      <Links />
-      {!shouldIndex && <meta name="robots" content="noindex" />}
-    </head>
-    <body>
+export const loader = async ({ context, request }: LoaderFunctionArgs) => {
+  const { getSession } = getSessionStorage(context);
+
+  const session = await getSession(request.headers.get("Cookie"));
+  if (!session.get("sessionId")) {
+    session.set("sessionId", nanoid());
+  }
+
+  const sessionId = session.get("sessionId");
+  const db = getDbFromContext(context.cloudflare.env);
+  const lockedSeatsForSession = await getLockedSeatsForSession(db, sessionId);
+
+  return data(
+    {
+      lockedSeatsForSession,
+      isAdmin: session.get("isAdmin"),
+      isBookingOpen: context.cloudflare.env.IS_OPEN === "true",
+      isProduction: context.cloudflare.env.IS_PRODUCTION === "true",
+    },
+    {
+      headers: await getSetCookieHeader(context, session),
+    },
+  );
+};
+
+export default function App() {
+  const { lockedSeatsForSession, isAdmin, isProduction } = useLoaderData<{
+    lockedSeatsForSession: LockedSeatModel[];
+    isAdmin: boolean;
+    isProduction: boolean;
+  }>();
+
+  return (
+    <div>
       <div className="min-h-screen">
         <header
           className={classNames(
             "navbar transition-colors",
-            isAdmin ? "bg-red-950" : "bg-base-200"
+            isAdmin ? "bg-red-950" : "bg-base-200",
           )}
         >
           <div className="flex-1">
@@ -69,9 +108,20 @@ const Layout: React.FC<LayoutProps> = ({
               <img src="/images/logo.png" alt="" height="36" width="150" />
             </Link>
           </div>
-          <div className="flex-none">{headerItems}</div>
+          <div className="flex-none">
+            {!isAdmin && (
+              <Link to={"/basket"} className="btn btn-ghost">
+                Panier ({lockedSeatsForSession.length})
+              </Link>
+            )}
+            {isAdmin && (
+              <Link to={"/admin"} className="badge badge-error">
+                Administrateur
+              </Link>
+            )}
+          </div>
         </header>
-        {!shouldIndex && (
+        {!isProduction && (
           <div className="bg-red-600 p-4 text-center">
             Site de test! Aucune réservation n&apos;est réelle. Pour le vrai
             site,{" "}
@@ -80,124 +130,44 @@ const Layout: React.FC<LayoutProps> = ({
             </a>
           </div>
         )}
-        <main>{children}</main>
+        <main>
+          <Outlet />
+        </main>
       </div>
       <footer className="footer flex justify-end bg-base-200 p-8">
         <Link to="/admin" className="link">
           Administrateur
         </Link>
       </footer>
-      <ScrollRestoration />
-      <Scripts />
-      <LiveReload />
-      <script
-        defer
-        src="https://static.cloudflareinsights.com/beacon.min.js"
-        data-cf-beacon='{"token": "1334d00fe7044e12ace4e4881fb419f8"}'
-      ></script>
-    </body>
-  </html>
-);
-
-export const loader = async ({ context, request }: LoaderArgs) => {
-  const { getSession } = getSessionStorage(context);
-
-  const session = await getSession(request.headers.get("Cookie"));
-  if (!session.get("sessionId")) {
-    session.set("sessionId", uuidv4());
-  }
-
-  const sessionId = session.get("sessionId");
-  const db = getDbFromContext(context);
-  const lockedSeatsForSession = await getLockedSeatsForSession(db, sessionId);
-
-  return typedjson(
-    {
-      lockedSeatsForSession,
-      isAdmin: session.get("isAdmin"),
-      isBookingOpen: context.IS_OPEN === "true",
-      isProduction: context.IS_PRODUCTION === "true",
-    },
-    {
-      headers: await getSetCookieHeader(context, session),
-    }
-  );
-};
-
-export default function App() {
-  const { lockedSeatsForSession, isAdmin, isProduction } = useTypedLoaderData<{
-    lockedSeatsForSession: LockedSeatModel[];
-    isAdmin: boolean;
-    isProduction: boolean;
-  }>();
-
-  return (
-    <Layout
-      isAdmin={isAdmin}
-      shouldIndex={isProduction}
-      headerItems={
-        <>
-          {!isAdmin && (
-            <Link to={"/basket"} className="btn-ghost btn">
-              Panier ({lockedSeatsForSession.length})
-            </Link>
-          )}
-          {isAdmin && (
-            <Link to={"/admin"} className="badge-error badge">
-              Administrateur
-            </Link>
-          )}
-        </>
-      }
-    >
-      <Outlet />
-    </Layout>
+    </div>
   );
 }
-export function ErrorBoundary() {
-  const error = useRouteError();
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  let message = "Oops!";
+  let details = "An unexpected error occurred.";
+  let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    return (
-      <Layout shouldIndex={false}>
-        <div className="flex flex-col items-center gap-2 p-2">
-          {error.status === 404 ? (
-            <h1 className="fluid-2xl">404 - Page non trouvée</h1>
-          ) : (
-            <>
-              <h1 className="fluid-2xl">Houston, on a un problème</h1>
-              <p>Merci de contacter le support</p>
-            </>
-          )}
-          <div className="flex flex-col gap-4 text-center">
-            <p className="fluid-lg">Votre panier est vide</p>
-            <Link to={"/"} className="btn-primary btn self-center">
-              Retour à l&apos;accueil
-            </Link>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  let errorMessage = "Unknown error";
-  if (error instanceof Error) {
-    errorMessage = error.message;
+    message = error.status === 404 ? "404" : "Error";
+    details =
+      error.status === 404
+        ? "The requested page could not be found."
+        : error.statusText || details;
+  } else if (import.meta.env.DEV && error && error instanceof Error) {
+    details = error.message;
+    stack = error.stack;
   }
 
   return (
-    <Layout shouldIndex={false}>
-      <div className="flex flex-col items-center gap-2 p-2">
-        <h1 className="fluid-2xl">Une erreur est survenue</h1>
-        <p>Merci de contacter le support avec cette erreur:</p>
-        <pre>{errorMessage}</pre>
-        <div className="flex flex-col gap-4 text-center">
-          <p className="fluid-lg">Votre panier est vide</p>
-          <Link to={"/"} className="btn-primary btn self-center">
-            Retour à l&apos;accueil
-          </Link>
-        </div>
-      </div>
-    </Layout>
+    <main className="container mx-auto p-4 pt-16">
+      <h1>{message}</h1>
+      <p>{details}</p>
+      {stack && (
+        <pre className="w-full overflow-x-auto p-4">
+          <code>{stack}</code>
+        </pre>
+      )}
+    </main>
   );
 }

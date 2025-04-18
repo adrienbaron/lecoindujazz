@@ -1,20 +1,17 @@
-import type { AppLoadContext } from "@remix-run/cloudflare";
-import { createCookieSessionStorage } from "@remix-run/cloudflare";
-import type {
-  Session,
-  SessionData,
-  SessionStorage,
-} from "@remix-run/server-runtime";
+import type { AppLoadContext } from "react-router";
+import { createCookieSessionStorage } from "react-router";
+import type { Session, SessionData, SessionStorage } from "react-router";
 
 let cookieSessionStorage: SessionStorage<SessionData, SessionData>;
 
 export const getSessionStorage = <Data = SessionData, FlashData = Data>(
-  context: AppLoadContext
+  context: AppLoadContext,
 ) => {
   if (!cookieSessionStorage) {
-    if (!context.SESSION_SECRET) {
+    const sessionSecret = context.cloudflare.env.SESSION_SECRET;
+    if (!sessionSecret) {
       throw new Error(
-        "You must provide a SESSION_SECRET environment variable to use sessions."
+        "You must provide a SESSION_SECRET environment variable to use sessions.",
       );
     }
 
@@ -26,7 +23,7 @@ export const getSessionStorage = <Data = SessionData, FlashData = Data>(
         maxAge: 7 * 24 * 60 * 60,
         path: "/",
 
-        secrets: [context.SESSION_SECRET as string],
+        secrets: [sessionSecret as string],
       },
     });
   }
@@ -36,7 +33,7 @@ export const getSessionStorage = <Data = SessionData, FlashData = Data>(
 
 export const getSetCookieHeader = async (
   context: AppLoadContext,
-  session: Session
+  session: Session,
 ) => {
   const { commitSession } = getSessionStorage(context);
   return {

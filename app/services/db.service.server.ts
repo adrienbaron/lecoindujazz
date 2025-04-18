@@ -1,7 +1,6 @@
 import { and, eq, gt, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { drizzle } from "drizzle-orm/d1";
-import { v4 as uuidv4 } from "uuid";
 
 import type { LockedSeatModel, PurchasedSeatModel } from "~/models/dbSchema";
 import {
@@ -10,26 +9,27 @@ import {
   purchaseTable,
 } from "~/models/dbSchema";
 import type { UnavailableSeat } from "~/models/seatMap";
+import { nanoid } from "nanoid";
 
 const contextWithDb = (
-  context: Record<string, unknown>
-): context is { DB: D1Database } => {
-  return "DB" in context;
+  cloudflareEnv: Record<string, unknown>,
+): cloudflareEnv is { DB: D1Database } => {
+  return "DB" in cloudflareEnv;
 };
 
 export const getDbFromContext = (
-  context: Record<string, unknown>
+  cloudflareEnv: Record<string, unknown>,
 ): DrizzleD1Database => {
-  if (!contextWithDb(context)) {
+  if (!contextWithDb(cloudflareEnv)) {
     throw new Error("No database in context");
   }
 
-  return drizzle(context.DB);
+  return drizzle(cloudflareEnv.DB);
 };
 
 export const getPurchasedSeatsForShow = async (
   db: DrizzleD1Database,
-  showId: string
+  showId: string,
 ): Promise<Pick<PurchasedSeatModel, "purchaseId" | "seatId">[]> =>
   await db
     .select({
@@ -42,7 +42,7 @@ export const getPurchasedSeatsForShow = async (
 
 export const getLockedSeatsForShow = async (
   db: DrizzleD1Database,
-  showId: string
+  showId: string,
 ): Promise<Pick<LockedSeatModel, "seatId" | "sessionId" | "lockedUntil">[]> => {
   return await db
     .select({
@@ -54,15 +54,15 @@ export const getLockedSeatsForShow = async (
     .where(
       and(
         eq(lockedSeatsTable.showId, showId),
-        gt(lockedSeatsTable.lockedUntil, new Date())
-      )
+        gt(lockedSeatsTable.lockedUntil, new Date()),
+      ),
     )
     .all();
 };
 
 export const getAllUnavailableSeatsForShow = async (
   db: DrizzleD1Database,
-  showId: string
+  showId: string,
 ): Promise<UnavailableSeat[]> => {
   const [lockedSeats, purchasedSeats] = await Promise.all([
     getLockedSeatsForShow(db, showId),
@@ -85,7 +85,7 @@ export const getAllUnavailableSeatsForShow = async (
 
 export async function getLockedSeatsForSession(
   db: DrizzleD1Database,
-  sessionId: string
+  sessionId: string,
 ) {
   return await db
     .select()
@@ -93,8 +93,8 @@ export async function getLockedSeatsForSession(
     .where(
       and(
         eq(lockedSeatsTable.sessionId, sessionId),
-        gt(lockedSeatsTable.lockedUntil, new Date())
-      )
+        gt(lockedSeatsTable.lockedUntil, new Date()),
+      ),
     )
     .all();
 }
@@ -102,13 +102,13 @@ export async function getLockedSeatsForSession(
 export async function registerPurchase(
   db: DrizzleD1Database,
   stripeCheckoutSessionId: string,
-  customerDetails: { name: string; email: string }
+  customerDetails: { name: string; email: string },
 ) {
   const seats = await db
     .select()
     .from(lockedSeatsTable)
     .where(
-      eq(lockedSeatsTable.stripeCheckoutSessionId, stripeCheckoutSessionId)
+      eq(lockedSeatsTable.stripeCheckoutSessionId, stripeCheckoutSessionId),
     )
     .all();
 
@@ -132,14 +132,14 @@ export async function registerPurchase(
         showId,
         seatId,
         purchaseId: stripeCheckoutSessionId,
-      }))
+      })),
     )
     .run();
 
   await db
     .delete(lockedSeatsTable)
     .where(
-      eq(lockedSeatsTable.stripeCheckoutSessionId, stripeCheckoutSessionId)
+      eq(lockedSeatsTable.stripeCheckoutSessionId, stripeCheckoutSessionId),
     )
     .run();
 }
@@ -152,7 +152,7 @@ export interface SeatIdWithStatus {
 export const adminLockAndUnlockSeats = async (
   db: DrizzleD1Database,
   showId: string,
-  selectedSeatsIdWithStatuses: SeatIdWithStatus[]
+  selectedSeatsIdWithStatuses: SeatIdWithStatus[],
 ): Promise<{ success: boolean }> => {
   const [lockedSeats, purchasedSeats] = await Promise.all([
     getLockedSeatsForShow(db, showId),
@@ -160,35 +160,35 @@ export const adminLockAndUnlockSeats = async (
   ]);
 
   const selectedSeatsId = selectedSeatsIdWithStatuses.map(
-    (selectedSeat) => selectedSeat.seatId
+    (selectedSeat) => selectedSeat.seatId,
   );
   const seatIdToStatusMap = new Map(
     selectedSeatsIdWithStatuses.map((selectedSeat) => [
       selectedSeat.seatId,
       selectedSeat.status,
-    ])
+    ]),
   );
 
   const lockedSeatsIdSet = new Set(lockedSeats.map((seat) => seat.seatId));
   const purchasedSeatsMap = new Map(
-    purchasedSeats.map((seat) => [seat.seatId, seat])
+    purchasedSeats.map((seat) => [seat.seatId, seat]),
   );
 
   const lockedSeatsToUnlock = selectedSeatsId.filter((selectedSeatId) =>
-    lockedSeatsIdSet.has(selectedSeatId)
+    lockedSeatsIdSet.has(selectedSeatId),
   );
   const purchasedSeatsToUnlock = selectedSeatsId.filter((selectedSeatId) =>
-    purchasedSeatsMap.has(selectedSeatId)
+    purchasedSeatsMap.has(selectedSeatId),
   );
   const seatsToMarkAsPurchased = selectedSeatsId.filter(
     (selectedSeatId) =>
       !lockedSeatsIdSet.has(selectedSeatId) &&
-      !purchasedSeatsMap.has(selectedSeatId)
+      !purchasedSeatsMap.has(selectedSeatId),
   );
 
   if (
     [...lockedSeatsToUnlock, ...purchasedSeatsToUnlock].some(
-      (seatId) => seatIdToStatusMap.get(seatId) === "available"
+      (seatId) => seatIdToStatusMap.get(seatId) === "available",
     )
   ) {
     return { success: false };
@@ -196,13 +196,13 @@ export const adminLockAndUnlockSeats = async (
 
   if (
     seatsToMarkAsPurchased.some(
-      (seatId) => seatIdToStatusMap.get(seatId) === "unavailable"
+      (seatId) => seatIdToStatusMap.get(seatId) === "unavailable",
     )
   ) {
     return { success: false };
   }
 
-  const adminPurchaseId = `ADMIN:${uuidv4()}`;
+  const adminPurchaseId = `ADMIN:${nanoid()}`;
   if (seatsToMarkAsPurchased.length > 0) {
     await db
       .insert(purchaseTable)
@@ -220,9 +220,9 @@ export const adminLockAndUnlockSeats = async (
         inArray(
           purchaseTable.id,
           purchasedSeatsToUnlock.map(
-            (seatId) => purchasedSeatsMap.get(seatId)?.purchaseId as string
-          )
-        )
+            (seatId) => purchasedSeatsMap.get(seatId)?.purchaseId as string,
+          ),
+        ),
       )
       .run();
   }
@@ -234,8 +234,8 @@ export const adminLockAndUnlockSeats = async (
         .where(
           and(
             eq(lockedSeatsTable.showId, showId),
-            inArray(lockedSeatsTable.seatId, lockedSeatsToUnlock)
-          )
+            inArray(lockedSeatsTable.seatId, lockedSeatsToUnlock),
+          ),
         )
         .run(),
     purchasedSeatsToUnlock.length > 0 &&
@@ -244,8 +244,8 @@ export const adminLockAndUnlockSeats = async (
         .where(
           and(
             eq(purchasedSeatsTable.showId, showId),
-            inArray(purchasedSeatsTable.seatId, purchasedSeatsToUnlock)
-          )
+            inArray(purchasedSeatsTable.seatId, purchasedSeatsToUnlock),
+          ),
         )
         .run(),
     seatsToMarkAsPurchased.length > 0 &&
@@ -256,7 +256,7 @@ export const adminLockAndUnlockSeats = async (
             showId,
             seatId,
             purchaseId: adminPurchaseId,
-          }))
+          })),
         )
         .run(),
   ]);
@@ -267,15 +267,15 @@ export const adminLockAndUnlockSeats = async (
 export const unlockSeat = async (
   db: DrizzleD1Database,
   showId: string,
-  seatId: string
+  seatId: string,
 ) =>
   db
     .delete(lockedSeatsTable)
     .where(
       and(
         eq(lockedSeatsTable.showId, showId),
-        eq(lockedSeatsTable.seatId, seatId)
-      )
+        eq(lockedSeatsTable.seatId, seatId),
+      ),
     )
     .run();
 
@@ -283,7 +283,7 @@ export const setSeatLockHasChild = async (
   db: DrizzleD1Database,
   showId: string,
   seatId: string,
-  hasChild: boolean
+  hasChild: boolean,
 ) =>
   db
     .update(lockedSeatsTable)
@@ -291,7 +291,7 @@ export const setSeatLockHasChild = async (
     .where(
       and(
         eq(lockedSeatsTable.showId, showId),
-        eq(lockedSeatsTable.seatId, seatId)
-      )
+        eq(lockedSeatsTable.seatId, seatId),
+      ),
     )
     .run();

@@ -1,6 +1,9 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import daisyui from "daisyui";
+import tailwindFluidTypography from "tailwind-fluid-typography";
+import tailwindTypography from "@tailwindcss/typography";
+import { Config } from "tailwindcss";
+
+export default {
   content: ["./app/**/*.{ts,tsx,jsx,js}"],
   theme: {
     extend: {
@@ -9,11 +12,7 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require("tailwind-fluid-typography"),
-    require("@tailwindcss/typography"),
-    require("daisyui"),
-  ],
+  plugins: [daisyui, tailwindTypography, tailwindFluidTypography],
   daisyui: {
     themes: [
       {
@@ -33,4 +32,4 @@ module.exports = {
       },
     ],
   },
-};
+} satisfies Config;

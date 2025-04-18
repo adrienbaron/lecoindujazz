@@ -1,5 +1,5 @@
-import type { ActionFunction } from "@remix-run/cloudflare";
-import { json } from "@remix-run/cloudflare";
+import type { ActionFunction } from "react-router";
+import { data } from "react-router";
 import Stripe from "stripe";
 import { z } from "zod";
 
@@ -14,9 +14,9 @@ const envSchema = z.object({
 });
 
 export const action: ActionFunction = async ({ context, request }) => {
-  const parsedEnv = envSchema.safeParse(context);
+  const parsedEnv = envSchema.safeParse(context.cloudflare.env);
   if (!parsedEnv.success) {
-    return json({ error: parsedEnv.error, reason: "NO_ENV" }, { status: 500 });
+    return data({ error: parsedEnv.error, reason: "NO_ENV" }, { status: 500 });
   }
   const env = parsedEnv.data;
 
@@ -33,22 +33,22 @@ export const action: ActionFunction = async ({ context, request }) => {
     event = await stripe.webhooks.constructEventAsync(
       payload,
       sig,
-      env.STRIPE_WEBHOOK_SECRET
+      env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (err) {
     console.error(err);
-    return json({ error: err, reason: "STRIPE_ERROR" }, { status: 400 });
+    return data({ error: err, reason: "STRIPE_ERROR" }, { status: 400 });
   }
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
 
     if (!session.customer_details?.name || !session.customer_details?.email) {
-      return json({ error: "Missing customer details" }, { status: 400 });
+      return data({ error: "Missing customer details" }, { status: 400 });
     }
 
     try {
-      const db = getDbFromContext(context);
+      const db = getDbFromContext(context.cloudflare.env);
       await registerPurchase(db, session.id, {
         name: session.customer_details.name,
         email: session.customer_details.email,
@@ -57,9 +57,9 @@ export const action: ActionFunction = async ({ context, request }) => {
       console.log(`[action][${session.id}] completed purchase`);
     } catch (err) {
       console.error(err);
-      return json({ error: err, reason: "DB_ERROR" }, { status: 500 });
+      return data({ error: err, reason: "DB_ERROR" }, { status: 500 });
     }
   }
 
-  return json({ success: true });
+  return data({ success: true });
 };

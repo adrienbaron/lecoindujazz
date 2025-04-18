@@ -1,11 +1,10 @@
-import type { ActionArgs } from "@remix-run/cloudflare";
-import { json } from "@remix-run/cloudflare";
-import { Form, useRouteLoaderData } from "@remix-run/react";
-import { redirect } from "@remix-run/router";
+import type { ActionFunctionArgs } from "react-router";
+import { data, redirect } from "react-router";
+import { Form, useRouteLoaderData } from "react-router";
 
 import { getSessionStorage, getSetCookieHeader } from "~/session";
 
-export const action = async ({ request, context }: ActionArgs) => {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const { getSession } = getSessionStorage(context);
   const session = await getSession(request.headers.get("Cookie"));
 
@@ -20,10 +19,10 @@ export const action = async ({ request, context }: ActionArgs) => {
 
   const password = formData.get("password");
   if (!password) {
-    return json({ error: "Mot de passe invalide" }, { status: 400 });
+    return data({ error: "Mot de passe invalide" }, { status: 400 });
   }
-  if (password !== context.ADMIN_PASSWORD) {
-    return json({ error: "Mot de passe invalide" }, { status: 400 });
+  if (password !== context.cloudflare.env.ADMIN_PASSWORD) {
+    return data({ error: "Mot de passe invalide" }, { status: 400 });
   }
 
   session.set("isAdmin", true);
@@ -53,7 +52,7 @@ export default function Admin() {
               className="input"
             />
             <div className="card-actions flex justify-end">
-              <button className="btn-primary btn" name="action" value="login">
+              <button className="btn btn-primary" name="action" value="login">
                 Se connecter
               </button>
             </div>
@@ -69,7 +68,7 @@ export default function Admin() {
         <div className="card-body">
           <p>Vous êtes connecté en tant qu&rsquo;administrateur</p>
           <div className="card-actions flex justify-end">
-            <button className="btn-primary btn" name="action" value="logout">
+            <button className="btn btn-primary" name="action" value="logout">
               Se deconnecter
             </button>
           </div>

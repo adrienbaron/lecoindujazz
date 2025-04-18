@@ -1,11 +1,9 @@
-import type { ActionArgs } from "@remix-run/cloudflare";
-import { json } from "@remix-run/cloudflare";
-import { Form, Link, useNavigation, useRevalidator } from "@remix-run/react";
-import { redirect } from "@remix-run/router";
+import { type ActionFunctionArgs, useRouteLoaderData } from "react-router";
+import { data, redirect } from "react-router";
+import { Form, Link, useNavigation, useRevalidator } from "react-router";
 import classNames from "classnames";
 import { eq } from "drizzle-orm";
 import { useEffect, useMemo, useState } from "react";
-import { useTypedRouteLoaderData } from "remix-typedjson";
 import Stripe from "stripe";
 import { z } from "zod";
 
@@ -30,6 +28,7 @@ import {
 } from "~/services/db.service.server";
 import { getSessionStorage } from "~/session";
 import { formatPrice } from "~/utils/price";
+import type { loader } from "~/root";
 
 const seatLockReferenceSchema = z.object({
   showId: z.string(),
@@ -38,8 +37,8 @@ const seatLockReferenceSchema = z.object({
 
 const childOnLapsPriceInCents = 6_00;
 
-export const action = async ({ context, request }: ActionArgs) => {
-  if (!context.IS_OPEN) {
+export const action = async ({ context, request }: ActionFunctionArgs) => {
+  if (!context.cloudflare.env.IS_OPEN) {
     throw new Error("Booking is closed");
   }
 
@@ -49,7 +48,7 @@ export const action = async ({ context, request }: ActionArgs) => {
     return redirect("/");
   }
   const sessionId = session.get("sessionId");
-  const db = getDbFromContext(context);
+  const db = getDbFromContext(context.cloudflare.env);
 
   const lockedSeatsForSession = await getLockedSeatsForSession(db, sessionId);
   if (!lockedSeatsForSession.length) {
@@ -60,56 +59,56 @@ export const action = async ({ context, request }: ActionArgs) => {
   const deleteSeatData = formData.get("delete");
   if (deleteSeatData) {
     const seatToDelete = seatLockReferenceSchema.parse(
-      JSON.parse(deleteSeatData as string)
+      JSON.parse(deleteSeatData as string),
     );
     await unlockSeat(db, seatToDelete.showId, seatToDelete.seatId);
 
     console.log(`[action][${sessionId}] removed seat: `, seatToDelete.seatId);
-    return json({ success: true });
+    return data({ success: true });
   }
 
   const addChildData = formData.get("add-child");
   if (addChildData) {
     const seatToAddChildTo = seatLockReferenceSchema.parse(
-      JSON.parse(addChildData as string)
+      JSON.parse(addChildData as string),
     );
     await setSeatLockHasChild(
       db,
       seatToAddChildTo.showId,
       seatToAddChildTo.seatId,
-      true
+      true,
     );
 
     console.log(
       `[action][${sessionId}] added child to seat: `,
-      seatToAddChildTo.seatId
+      seatToAddChildTo.seatId,
     );
-    return json({ success: true });
+    return data({ success: true });
   }
 
   const removeChildData = formData.get("remove-child");
   if (removeChildData) {
     const seatToRemoveChildFrom = seatLockReferenceSchema.parse(
-      JSON.parse(removeChildData as string)
+      JSON.parse(removeChildData as string),
     );
     await setSeatLockHasChild(
       db,
       seatToRemoveChildFrom.showId,
       seatToRemoveChildFrom.seatId,
-      false
+      false,
     );
 
     console.log(
       `[action][${sessionId}] removed child from seat: `,
-      seatToRemoveChildFrom.seatId
+      seatToRemoveChildFrom.seatId,
     );
-    return json({ success: true });
+    return data({ success: true });
   }
 
   // Lock seats for 45 minutes
   const lockedUntil = new Date(Date.now() + 45 * 60 * 1000);
 
-  const stripe = new Stripe(context.STRIPE_PK as string, {
+  const stripe = new Stripe(context.cloudflare.env.STRIPE_PK as string, {
     apiVersion: "2022-11-15",
     httpClient: Stripe.createFetchHttpClient(), // ensure we use a Fetch client, and not Node's `http`
   });
@@ -133,7 +132,7 @@ export const action = async ({ context, request }: ActionArgs) => {
             (seatLock.hasChildOnLap ? childOnLapsPriceInCents : 0),
           product_data: {
             name: `${sectionTypeToTitle[seat.sectionType]} ${seatToHumanString(
-              seat
+              seat,
             )} ${
               seatLock.hasChildOnLap ? "(+ Enfant -4 ans)" : ""
             } | ${showToHumanString(show)}`,
@@ -162,7 +161,7 @@ export const action = async ({ context, request }: ActionArgs) => {
     `[action][${sessionId}] confirmed basket: `,
     JSON.stringify(lockedSeatsForSession.map((s) => s.seatId)),
     "stripeSessionId: ",
-    stripeSession.id
+    stripeSession.id,
   );
   return redirect(stripeSession.url);
 };
@@ -179,9 +178,7 @@ function sessionToExpireInSeconds(lockedSeatsForSession: LockedSeatModel[]) {
 }
 
 export default function Basket() {
-  const data = useTypedRouteLoaderData<{
-    lockedSeatsForSession: LockedSeatModel[];
-  }>("root");
+  const data = useRouteLoaderData<typeof loader>("root");
   if (!data) {
     throw new Error("No data");
   }
@@ -204,7 +201,7 @@ export default function Basket() {
   }, new Map<string, Seat[]>());
 
   const lockedSeatMap = new Map<string, LockedSeatModel>(
-    lockedSeatsForSession.map((seatLock) => [seatLock.seatId, seatLock])
+    lockedSeatsForSession.map((seatLock) => [seatLock.seatId, seatLock]),
   );
 
   [...seatsPerShow.values()].forEach((seats) => {
@@ -276,7 +273,7 @@ export default function Basket() {
                 </h2>
                 <p className="flex items-center justify-start gap-2">
                   <div className="bg-success p-1 text-success-content">
-                    <BearIcon className="h-4 w-4" />
+                    <BearIcon className="size-4" />
                   </div>
                   <span>
                     Seul les enfants de -4 ans sur les genoux sont accepté
@@ -301,7 +298,7 @@ export default function Basket() {
                       seatLockReference;
 
                   const hasChildOnLap = lockedSeatMap.get(
-                    seat.id
+                    seat.id,
                   )?.hasChildOnLap;
 
                   return (
@@ -317,14 +314,14 @@ export default function Basket() {
                               <button
                                 className={classNames(
                                   "btn-xs btn btn-success gap-1 self-start normal-case",
-                                  isAddingChild && "loading"
+                                  isAddingChild && "loading",
                                 )}
                                 disabled={navigation.state !== "idle"}
                                 name="add-child"
                                 value={seatLockReference}
                               >
                                 {!isAddingChild && (
-                                  <BearIcon className="h-4 w-4" />
+                                  <BearIcon className="size-4" />
                                 )}{" "}
                                 Ajouter un Enfant (
                                 {formatPrice(childOnLapsPriceInCents)})
@@ -334,14 +331,14 @@ export default function Basket() {
                               <button
                                 className={classNames(
                                   "btn-xs btn btn-error gap-1 self-start normal-case",
-                                  isRemovingChild && "loading"
+                                  isRemovingChild && "loading",
                                 )}
                                 disabled={navigation.state !== "idle"}
                                 name="remove-child"
                                 value={seatLockReference}
                               >
                                 {!isRemovingChild && (
-                                  <BearIcon className="h-4 w-4" />
+                                  <BearIcon className="size-4" />
                                 )}{" "}
                                 Retirer l&rsquo;Enfant
                               </button>
@@ -349,14 +346,14 @@ export default function Basket() {
                             <button
                               className={classNames(
                                 "btn-xs btn gap-1 self-start normal-case",
-                                isDeletingSeat && "loading"
+                                isDeletingSeat && "loading",
                               )}
                               disabled={navigation.state !== "idle"}
                               name="delete"
                               value={seatLockReference}
                             >
                               {!isDeletingSeat && (
-                                <TrashIcon className="h-4 w-4" />
+                                <TrashIcon className="size-4" />
                               )}{" "}
                               Retirer du panier
                             </button>
@@ -366,7 +363,7 @@ export default function Basket() {
                           <span>{formatPrice(getSeatPrice(seat))}</span>
                           {!!hasChildOnLap && (
                             <span className="flex text-xs text-warning">
-                              +<BearIcon className="h-4 w-4" />{" "}
+                              +<BearIcon className="size-4" />{" "}
                               {formatPrice(childOnLapsPriceInCents)}
                             </span>
                           )}
@@ -408,7 +405,7 @@ export default function Basket() {
               type="submit"
               className={classNames(
                 "btn-primary btn",
-                isValidatingBasket && "loading"
+                isValidatingBasket && "loading",
               )}
               name="action"
               value="startCheckout"
@@ -422,7 +419,7 @@ export default function Basket() {
       {lockedSeatsForSession.length === 0 && (
         <div className="flex flex-col gap-4 text-center">
           <p className="fluid-lg">Votre panier est vide</p>
-          <Link to={"/"} className="btn-primary btn self-center">
+          <Link to={"/"} className="btn btn-primary self-center">
             Retour à l&apos;accueil
           </Link>
         </div>

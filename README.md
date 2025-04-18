@@ -1,40 +1,79 @@
-# Le Coin Du Jazz
+# Welcome to React Router!
 
-This is an online ticket sales website for [Le Coin Du Jazz](https://www.lecoindujazz.com/).
+A modern, production-ready template for building full-stack React applications using React Router.
 
-It's using:
+## Features
 
-- [Remix](https://remix.run/)
-- [Tailwind](https://tailwindcss.com/)
-- [daisyUI](https://daisyui.com/)
-- [Cloudflare D1](https://developers.cloudflare.com/d1/)
+- 🚀 Server-side rendering
+- ⚡️ Hot Module Replacement (HMR)
+- 📦 Asset bundling and optimization
+- 🔄 Data loading and mutations
+- 🔒 TypeScript by default
+- 🎉 TailwindCSS for styling
+- 📖 [React Router docs](https://reactrouter.com/)
 
-And is deployed on [Cloudflare Pages](https://pages.cloudflare.com/).
+## Getting Started
 
-## Development
+### Installation
 
-First install packages:
+Install the dependencies:
 
-```sh
+```bash
 npm install
 ```
 
-Then, initialize the database:
-```sh
-npx wrangler d1 execute lecoindujazz-dev --file=./drizzle/0000_normal_lady_deathstrike.sql
-npx wrangler d1 execute lecoindujazz-dev --file=./drizzle/0001_confused_green_goblin.sql
-```
- 
-Copy the `.env.example` file and fill up the values with something meaningful. You only need to fill up Stripe ones if you want to test buying tickets.
+### Development
 
-Then build the app once:
-```sh
-npm run build
-```
+Start the development server with HMR:
 
-Finally, start the remix dev server and wrangler
-```sh
+```bash
 npm run dev
 ```
 
-Open up [http://127.0.0.1:8788](http://127.0.0.1:8788) and you should be ready to go 🥳!
+Your application will be available at `http://localhost:5173`.
+
+## Previewing the Production Build
+
+Preview the production build locally:
+
+```bash
+npm run preview
+```
+
+## Building for Production
+
+Create a production build:
+
+```bash
+npm run build
+```
+
+## Deployment
+
+Deployment is done using the Wrangler CLI.
+
+To build and deploy directly to production:
+
+```sh
+npm run deploy
+```
+
+To deploy a preview URL:
+
+```sh
+npx wrangler versions upload
+```
+
+You can then promote a version to production after verification or roll it out progressively.
+
+```sh
+npx wrangler versions deploy
+```
+
+## Styling
+
+This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+
+---
+
+Built with ❤️ using React Router.
